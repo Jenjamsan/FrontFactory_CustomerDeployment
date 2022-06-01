@@ -18,5 +18,5 @@ steps:
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(storageAccountKey)'
     inlineScript: |
      mkdir $1/temp
-     az storage file download --path projects/$2/$2.zip --share-name $3 --account-name storageff --dest $1/temp --account-key $4
+     az storage file download --path "projects/$2/$2.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --account-key "$4"
      ls $1/temp

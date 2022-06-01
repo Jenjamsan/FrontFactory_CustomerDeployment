@@ -15,7 +15,7 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(storageAccountKey) $(ProjectUID) $(ProjectVersion)'
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion)'
     inlineScript: |
      mkdir -p $1/temp
      mkdir -p $1/temp2

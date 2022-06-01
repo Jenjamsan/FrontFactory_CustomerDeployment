@@ -15,8 +15,8 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString)'
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(storageAccountKey)'
     inlineScript: |
      mkdir $1/temp
-     az storage file download --path $2 --share-name $3 --connection-string $4 --dest $1/temp
+     az storage file download --path projects/$2 --share-name $3 --account-name storageff --dest $1/temp --account-key $4
      ls $1/temp

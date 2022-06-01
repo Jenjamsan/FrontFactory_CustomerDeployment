@@ -17,6 +17,6 @@ steps:
     scriptLocation: inlineScript
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString)'
     inlineScript: |
-     mkdir $1\temp
-     az storage file download --path $2 --share-name $3 --connection-string $4 --dest $1\temp
-     ls $1\temp
+     mkdir $1/temp
+     az storage file download --path $2 --share-name $3 --connection-string $4 --dest $1/temp
+     ls $1/temp

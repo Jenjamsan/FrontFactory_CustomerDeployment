@@ -19,7 +19,8 @@ steps:
     inlineScript: |
      mkdir -p $1/temp
      az storage file download --path "projects/$2/$2.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
-     tar -xvf $1/temp/$2.zip
+     apt install unzip
+     unzip $1/temp/$2.zip
      ls $1/temp
 
 - task: Docker@2

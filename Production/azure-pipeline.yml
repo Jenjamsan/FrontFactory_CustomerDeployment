@@ -25,7 +25,7 @@ steps:
 - task: ExtractFiles@1
   inputs:
     archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(CustomerUID).zip'
-    destinationFolder: '$(Build.SourcesDirectory)/temp/'
+    destinationFolder: '$(Build.SourcesDirectory)/temp2/'
     cleanDestinationFolder: true
     overwriteExistingFiles: false
   
@@ -34,7 +34,7 @@ steps:
     containerRegistry: 'frontfactory docker'
     repository: 'customers'
     command: 'buildAndPush'
-    Dockerfile: '$(Build.SourcesDirectory)/temp/$(CustomerUID)/dockerfile'
+    Dockerfile: '$(Build.SourcesDirectory)/temp2/$(CustomerUID)/dockerfile'
 
 
 

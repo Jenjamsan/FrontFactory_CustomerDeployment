@@ -22,7 +22,15 @@ steps:
      apt install unzip
      unzip $1/temp/$2.zip
      ls $1/temp
-
+     
+    
+- task: ExtractFiles@1
+  inputs:
+    archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(CustomerUID).zip'
+    destinationFolder: '$(Build.SourcesDirectory)/temp/'
+    cleanDestinationFolder: true
+    overwriteExistingFiles: false
+  
 - task: Docker@2
   inputs:
     containerRegistry: 'frontfactory docker'

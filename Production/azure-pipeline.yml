@@ -15,11 +15,11 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(storageAccountKey)'
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(storageAccountKey) $(ProjectUID) $(ProjectVersion)'
     inlineScript: |
      mkdir -p $1/temp
      mkdir -p $1/temp2
-     az storage file download --path "projects/$2.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
+     az storage file download --path "projects/$2/$5/$6.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
      ls $1/temp
      
     
@@ -33,9 +33,10 @@ steps:
 - task: Docker@2
   inputs:
     containerRegistry: 'acrff'
-    repository: 'customers'
+    repository: 'customers/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/$(CustomerUID)/dockerfile'
+    tags: '$(ProjectVersion)'
 
 
 

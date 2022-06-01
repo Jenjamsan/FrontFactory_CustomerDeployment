@@ -10,10 +10,13 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: AzureCLI@1
+  displayName: 'Azure CLI '
+  inputs:
+    azureSubscription: $(azureResourceManagerConnection)
+    scriptLocation: inlineScript
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString)'
+    inlineScript: |
+     mkdir $1\temp
+     az storage file download --path $2 --share-name $3 --connection-string $4 --dest $1\temp
+     ls $1\temp

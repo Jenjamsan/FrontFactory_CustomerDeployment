@@ -19,6 +19,7 @@ steps:
     inlineScript: |
      mkdir -p $1/temp
      az storage file download --path "projects/$2.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
+     ls $1/temp
      
     
 - task: ExtractFiles@1

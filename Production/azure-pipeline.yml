@@ -17,6 +17,18 @@ steps:
     scriptLocation: inlineScript
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(storageAccountKey)'
     inlineScript: |
-     mkdir $1/temp
+     mkdir -p $1/temp
      az storage file download --path "projects/$2/$2.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
+     tar -xvfs $1/temp/$2.zip
      ls $1/temp
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'frontfactory docker'
+    repository: 'customers'
+    command: 'buildAndPush'
+    Dockerfile: '$(Build.SourcesDirectory)/temp/$(CustomerUID)/dockerfile'
+
+
+
+

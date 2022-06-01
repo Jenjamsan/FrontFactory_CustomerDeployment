@@ -36,7 +36,7 @@ steps:
     repository: 'customers/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/$(CustomerUID)/dockerfile'
-    tags: '$(ProjectVersion)'
+    tags: $(ProjectVersion)
 
 
 

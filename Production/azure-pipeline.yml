@@ -32,7 +32,7 @@ steps:
   
 - task: Docker@2
   inputs:
-    containerRegistry: 'frontfactory docker'
+    containerRegistry: 'acrff'
     repository: 'customers'
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/$(CustomerUID)/dockerfile'

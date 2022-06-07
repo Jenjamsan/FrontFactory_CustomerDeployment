@@ -17,4 +17,4 @@ steps:
     script: |
       docker login -u $4 -p $5 nexus-registry.frontfactory.local
       docker build . -t nexus-registry.frontfactory.local/customer/$1-$2:$3
-      docker push nexus-registry.frontfactory.local/customer/$1-$2:$3
+      docker push nexus-registry.frontfactory.local/customer/$1/$2:$3

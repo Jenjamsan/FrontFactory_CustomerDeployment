@@ -14,7 +14,7 @@ steps:
     targetType: 'inline'
     arguments: '$(CustomerUID) $(ProjectUID) $(ProjectVersion) $(DOCKER_LOGIN) $(DOCKER_PASSWORD)'
     script: |
-       ls /mnt/ff-preprod-api-generation/$1.zip
+       ls /mnt/ff-preprod-api-generation/"$1".zip
        
 
 - task: ExtractFiles@1
@@ -22,7 +22,7 @@ steps:
     archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID).zip'
     destinationFolder: '$(agent.builddirectory)'
     cleanDestinationFolder: true
-    overwriteExistingFiles: 'false'
+    overwriteExistingFiles: false
 
 
 - task: Bash@3
@@ -30,6 +30,6 @@ steps:
     targetType: 'inline'
     arguments: '$(CustomerUID) $(ProjectUID) $(ProjectVersion) $(DOCKER_LOGIN) $(DOCKER_PASSWORD)'
     script: |
-      docker login -u $4 -p $5 nexus-registry.frontfactory.local
-      docker build . -t nexus-registry.frontfactory.local/customer/$1/$2:$3
-      docker push nexus-registry.frontfactory.local/customer/$1/$2:$3
+      docker login -u "$4" -p "$5" nexus-registry.frontfactory.local
+      docker build . -t nexus-registry.frontfactory.local/customer/"$1/$2:$3"
+      docker push nexus-registry.frontfactory.local/customer/"$1/$2:$3"

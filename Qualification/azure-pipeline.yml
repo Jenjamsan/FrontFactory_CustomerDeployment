@@ -15,7 +15,7 @@ steps:
     script: |
        ls /mnt/ff-preprod-api-generation/$(CustomerUID).zip
        cp /mnt/ff-preprod-api-generation/$(CustomerUID).zip .
-       unzip $(CustomerUID).zip
+      #  # unzip $(CustomerUID).zip
 
 - task: Bash@3
   inputs:

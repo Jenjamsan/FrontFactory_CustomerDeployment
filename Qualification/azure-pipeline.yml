@@ -13,10 +13,9 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-       ls /mnt/ff-preprod-api-generation/$(CustomerUID).zip
        cp /mnt/ff-preprod-api-generation/$(CustomerUID).zip .
        ls .
-      #  # unzip $(CustomerUID).zip
+       unzip $(CustomerUID).zip
 
 - task: Bash@3
   inputs:

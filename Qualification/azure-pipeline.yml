@@ -9,7 +9,13 @@ steps:
 #     destinationFolder: '$(agent.builddirectory)'
 #     cleanDestinationFolder: true
 #     overwriteExistingFiles: false'
-
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    arguments: '$(CustomerUID) $(ProjectUID) $(ProjectVersion) $(DOCKER_LOGIN) $(DOCKER_PASSWORD)'
+    script: |
+       ls /mnt/ff-preprod-api-generation/$1.zip
+       
 
 - task: ExtractFiles@1
   inputs:

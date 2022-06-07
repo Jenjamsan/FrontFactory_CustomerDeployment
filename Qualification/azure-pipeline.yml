@@ -14,7 +14,7 @@ steps:
     targetType: 'inline'
     arguments: '$(CustomerUID) $(ProjectUID) $(ProjectVersion) $(DOCKER_LOGIN) $(DOCKER_PASSWORD)'
     script: |
-       ls /mnt/ff-preprod-api-generation/"$1".zip
+       ls /mnt/ff-preprod-api-generation/$(CustomerUID).zip
        
 
 - task: ExtractFiles@1

@@ -11,7 +11,7 @@ steps:
 #     overwriteExistingFiles: false'
 
 
-- task: ExtractFiles@2
+- task: ExtractFiles@1
   inputs:
     archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID).zip'
     destinationFolder: '$(agent.builddirectory)'

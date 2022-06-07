@@ -3,12 +3,21 @@ pool:
 
 steps:
 
-- task: ExtractFiles@1
+# - task: ExtractFiles@1
+#   inputs:
+#     archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID)/$(ProjectUID)/$(ProjectVersion)/$(ZipName).zip'
+#     destinationFolder: '$(agent.builddirectory)'
+#     cleanDestinationFolder: true
+#     overwriteExistingFiles: false'
+
+
+- task: ExtractFiles@2
   inputs:
-    archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID)/$(ProjectUID)/$(ProjectVersion)/$(ZipName).zip'
+    archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID).zip'
     destinationFolder: '$(agent.builddirectory)'
     cleanDestinationFolder: true
     overwriteExistingFiles: false'
+
 
 - task: Bash@3
   inputs:

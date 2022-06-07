@@ -15,17 +15,16 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion)'
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(zipName)'
     inlineScript: |
      mkdir -p $1/temp
      mkdir -p $1/temp2
-     az storage file download --path "projects/$2/$5/$6/$2.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
+     az storage file download --path "projects/$2/$5/$6/$7.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
      ls $1/temp
      
-    
 - task: ExtractFiles@1
   inputs:
-    archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(CustomerUID).zip'
+    archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(zipName).zip'
     destinationFolder: '$(Build.SourcesDirectory)/temp2/'
     cleanDestinationFolder: true
     overwriteExistingFiles: false
@@ -33,11 +32,25 @@ steps:
 - task: Docker@2
   inputs:
     containerRegistry: 'acrff'
-    repository: 'customers/$(CustomerUID)/$(ProjectUID)'
+    repository: 'customer/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
-    Dockerfile: '$(Build.SourcesDirectory)/temp2/$(CustomerUID)/dockerfile'
+    Dockerfile: '$(Build.SourcesDirectory)/temp2/$(zipName)/dockerfile'
     tags: $(ProjectVersion)
 
 
 
 
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+       cp -rf /mnt/ff-preprod-api-generation/$(CustomerUID)/$(ProjectUID)/$(ProjectVersion)/$(DirName) .
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      cd $(DirName)
+      docker login -u $(DOCKER_LOGIN) -p $(DOCKER_PASSWORD) nexus-registry.frontfactory.local
+      docker build . -t nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)
+      docker push nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)

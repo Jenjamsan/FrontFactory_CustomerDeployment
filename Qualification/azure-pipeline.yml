@@ -15,15 +15,6 @@ steps:
     script: |
        ls /mnt/ff-preprod-api-generation/$(CustomerUID).zip
        unzip /mnt/ff-preprod-api-generation/$(CustomerUID).zip
-       
-
-- task: ExtractFiles@1
-  inputs:
-    archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID).zip'
-    destinationFolder: '$(agent.builddirectory)'
-    cleanDestinationFolder: true
-    overwriteExistingFiles: false
-
 
 - task: Bash@3
   inputs:

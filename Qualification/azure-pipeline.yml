@@ -3,24 +3,16 @@ pool:
 
 steps:
 
-# - task: ExtractFiles@1
-#   inputs:
-#     archiveFilePatterns: '/mnt/ff-preprod-api-generation/$(CustomerUID)/$(ProjectUID)/$(ProjectVersion)/$(ZipName).zip'
-#     destinationFolder: '$(agent.builddirectory)'
-#     cleanDestinationFolder: true
-#     overwriteExistingFiles: false'
 - task: Bash@3
   inputs:
     targetType: 'inline'
     script: |
-       cp /mnt/ff-preprod-api-generation/$(CustomerUID).zip .
-       ls .
-       unzip $(CustomerUID).zip
-
+       cp -rf /mnt/ff-preprod-api-generation/$(CustomerUID)/$(ProjectUID)/$(ProjectVersion)/$(DirName) .
 - task: Bash@3
   inputs:
     targetType: 'inline'
     script: |
+      cd $(DirName)
       docker login -u $(DOCKER_LOGIN) -p $(DOCKER_PASSWORD) nexus-registry.frontfactory.local
       docker build . -t nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)
       docker push nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)

@@ -26,32 +26,32 @@ steps:
         config_context = "kubernetes-admin@kubernetes"
       }
       
-      resource "kubernetes_namespace" "customer_$(CustomerUID)" {
+      resource "kubernetes_namespace" "customer_namespace-$(CustomerUID)" {
         metadata {
-          name = "$(CustomerUID)"
+          name = "customer_namespace-$(CustomerUID)"
         }
       }
       
       resource "kubernetes_secret" "regcred" {
         metadata {
           name = "regcred"
-      	  namespace = "$(CustomerUID)"
+      	  namespace = "customer_namespace-$(CustomerUID)"
         }
         data = {
           ".dockerconfigjson" = "${file("~/.docker/config.json")}"
         }
         type = "kubernetes.io/dockerconfigjson"
-        depends_on = [kubernetes_namespace.customer_$(CustomerUID)]
+        depends_on = [kubernetes_namespace.customer_namespace-$(CustomerUID)]
       }
 
-      resource "kubernetes_service" "customer_$(ProjectUID)-service" {
+      resource "kubernetes_service" "customer_service-$(ProjectUID)" {
         metadata {
-          name = "$(ProjectUID)-service"
+          name = "service-$(ProjectUID)"
       	  namespace = "$(CustomerUID)"
         }
         spec {
           selector = {
-            app = kubernetes_pod.customer_$(ProjectUID).metadata.0.labels.app
+            app = kubernetes_pod.customer_pod-$(ProjectUID).metadata.0.labels.app
           }
           session_affinity = "ClientIP"
           port {
@@ -63,7 +63,7 @@ steps:
         }
       }
       
-      resource "kubernetes_pod" "customer_$(ProjectUID)" {
+      resource "kubernetes_pod" "customer_pod-$(ProjectUID)" {
         metadata {
           name = "$(ProjectUID)"
       	  namespace = "$(CustomerUID)"

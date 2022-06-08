@@ -57,7 +57,7 @@ steps:
       resource "kubernetes_service" "customer-service-$(ProjectUID)" {
         metadata {
           name = "customer-service-$(ProjectUID)"
-      	  namespace = customer-namespace-$(CustomerUID)"
+      	  namespace = "customer-namespace-$(CustomerUID)"
         }
         spec {
           selector = {

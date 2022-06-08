@@ -26,7 +26,7 @@ steps:
         config_context = "kubernetes-admin@kubernetes"
       }
       
-      resource "kubernetes_namespace" "$(CustomerUID)" {
+      resource "kubernetes_namespace" "customer_$(CustomerUID)" {
         metadata {
           name = "$(CustomerUID)"
         }
@@ -34,7 +34,7 @@ steps:
       
       resource "kubernetes_secret_v1" "regcred" {
         metadata {
-          name = "$(ProjectUID)"
+          name = "regcred"
       	  namespace = "$(CustomerUID)"
         }
         data = {
@@ -45,7 +45,7 @@ steps:
       
       
       
-      resource "kubernetes_service" "$(ProjectUID)-service" {
+      resource "kubernetes_service" "customer_$(ProjectUID)-service" {
         metadata {
           name = "$(ProjectUID)-service"
       	  namespace = "$(CustomerUID)"
@@ -64,7 +64,7 @@ steps:
         }
       }
       
-      resource "kubernetes_pod" "$(ProjectUID)" {
+      resource "kubernetes_pod" "customer_$(ProjectUID)" {
         metadata {
           name = "$(ProjectUID)"
       	  namespace = "$(CustomerUID)"

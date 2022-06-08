@@ -32,7 +32,7 @@ steps:
         }
       }
       
-      resource "kubernetes_secret_v1" "regcred" {
+      resource "kubernetes_secret" "regcred" {
         metadata {
           name = "regcred"
       	  namespace = "$(CustomerUID)"

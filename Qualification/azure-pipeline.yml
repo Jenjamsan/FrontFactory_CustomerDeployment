@@ -38,9 +38,18 @@ steps:
       	  namespace = "$(CustomerUID)"
         }
         data = {
-          ".dockerconfigjson" = "$(dockerconfigjson)"
+          ".dockerconfigjson" = jsonencode({
+            auths = {
+              "nexus-registry.frontfactory.local" = {
+                "username" = $(DOCKER_LOGIN)
+                "password" = $(DOCKER_PASSWORD)
+                "auth"     = base64encode("$(DOCKER_LOGIN):$(DOCKER_PASSWORD)")
+              }
+            }
+          })
         }
         type = "kubernetes.io/dockerconfigjson"
+        depends_on = [kubernetes_namespace.customer_$(CustomerUID)]
       }
       
       

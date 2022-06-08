@@ -16,3 +16,82 @@ steps:
       docker login -u $(DOCKER_LOGIN) -p $(DOCKER_PASSWORD) nexus-registry.frontfactory.local
       docker build . -t nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)
       docker push nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)
+
+- task: file-creator@6
+  inputs:
+    filepath: 'main.tf'
+    filecontent: |
+      provider "kubernetes" {
+        config_path    = "~/.kube/config"
+        config_context = "kubernetes-admin@kubernetes"
+      }
+      
+      resource "kubernetes_namespace" "$(CustomerUID)" {
+        metadata {
+          name = "$(CustomerUID)"
+        }
+      }
+      
+      resource "kubernetes_secret_v1" "regcred" {
+        metadata {
+          name = "$(ProjectUID)"
+      	namespace = "$(CustomerUID)
+        }
+        data = {
+          .dockerconfigjson = "ewoJImF1dGhzIjogewoJCSJuZXh1cy1yZWdpc3RyeS5mcm9udGZhY3RvcnkubG9jYWwiOiB7CgkJCSJhdXRoIjogIllXUnRhVzQ2VjJG>"
+        }
+        type = "kubernetes.io/dockerconfigjson"
+      }
+      
+      
+      
+      resource "kubernetes_service" "$(ProjectUID)-service" {
+        metadata {
+          name = "$(ProjectUID)-service"
+      	namespace = "$(CustomerUID)"
+        }
+        spec {
+          selector = {
+            app = kubernetes_pod.$(ProjectUID).metadata.0.labels.app
+          }
+          session_affinity = "ClientIP"
+          port {
+            port        = 80
+            target_port = 80
+          }
+      
+          type = "LoadBalancer"
+        }
+      }
+      
+      resource "kubernetes_pod" "$(ProjectUID)" {
+        metadata {
+          name = "$(ProjectUID)"
+      	namespace = "$(CustomerUID)"
+          labels = {
+            app = "$(ProjectUID)"
+          }
+        }
+      
+        spec {
+          container {
+            image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+            name  = "$(ProjectUID)"
+          }
+        }
+      }
+    fileoverwrite: true
+
+- task: TerraformInstaller@0
+  inputs:
+    terraformVersion: 'latest'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Write your commands here
+      terraform init
+      terraform workspace create $(CustomerUID)
+      terraform workspace select $(CustomerUID)
+      terraform validate
+      terraform apply

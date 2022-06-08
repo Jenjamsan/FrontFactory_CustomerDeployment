@@ -82,7 +82,7 @@ steps:
             name = "regcred"
           }
         }
-      depends_on = [kubernetes_secret_v1.regcred]
+      depends_on = [kubernetes_secret.regcred]
       }
     fileoverwrite: true
 

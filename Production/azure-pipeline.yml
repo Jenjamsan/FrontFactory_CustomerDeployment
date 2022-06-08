@@ -48,20 +48,20 @@ steps:
         config_context = "aksff"
       }
       
-      resource "kubernetes_namespace" "customer_$(CustomerUID)" {
+      resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
         metadata {
-          name = "$(CustomerUID)"
+          name = "customer-namespace-$(CustomerUID)"
         }
       }
       
-      resource "kubernetes_service" "customer_$(ProjectUID)-service" {
+      resource "kubernetes_service" "customer-service-$(ProjectUID)" {
         metadata {
-          name = "$(ProjectUID)-service"
-      	  namespace = "$(CustomerUID)"
+          name = "customer-service-$(ProjectUID)"
+      	  namespace = customer-namespace-$(CustomerUID)"
         }
         spec {
           selector = {
-            app = kubernetes_pod.customer_$(ProjectUID).metadata.0.labels.app
+            app = kubernetes_pod.customer-pod-$(ProjectUID).metadata.0.labels.app
           }
           session_affinity = "ClientIP"
           port {
@@ -73,12 +73,12 @@ steps:
         }
       }
       
-      resource "kubernetes_pod" "customer_$(ProjectUID)" {
+      resource "kubernetes_pod" "customer-pod-$(ProjectUID)" {
         metadata {
-          name = "$(ProjectUID)"
-      	  namespace = "$(CustomerUID)"
+          name = "customer-pod-$(ProjectUID)"
+      	  namespace = "customer-namespace-$(CustomerUID)"
           labels = {
-            app = "$(ProjectUID)"
+            app = "customer-pod-$(ProjectUID)"
           }
         }
       

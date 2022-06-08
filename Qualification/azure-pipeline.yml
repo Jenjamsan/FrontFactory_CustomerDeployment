@@ -78,7 +78,7 @@ steps:
             image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
             name  = "$(ProjectUID)"
           }
-          imagePullSecrets {
+          image_pull_secrets {
             name = "regcred"
           }
         }

@@ -84,14 +84,13 @@ steps:
       
         spec {
           container {
-            image = "https://acrcustomer/$(CustomerUID)/$(ProjectUID)"
+            image = "https://acrff.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
             name  = "$(ProjectUID)"
           }
           image_pull_secrets {
             name = "regcred"
           }
         }
-      depends_on = [kubernetes_secret.regcred]
       }
     fileoverwrite: true
 

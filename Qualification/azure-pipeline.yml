@@ -35,7 +35,7 @@ steps:
       resource "kubernetes_secret_v1" "regcred" {
         metadata {
           name = "$(ProjectUID)"
-      	namespace = "$(CustomerUID)
+      	  namespace = "$(CustomerUID)"
         }
         data = {
           .dockerconfigjson = "ewoJImF1dGhzIjogewoJCSJuZXh1cy1yZWdpc3RyeS5mcm9udGZhY3RvcnkubG9jYWwiOiB7CgkJCSJhdXRoIjogIllXUnRhVzQ2VjJG>"
@@ -48,7 +48,7 @@ steps:
       resource "kubernetes_service" "$(ProjectUID)-service" {
         metadata {
           name = "$(ProjectUID)-service"
-      	namespace = "$(CustomerUID)"
+      	  namespace = "$(CustomerUID)"
         }
         spec {
           selector = {
@@ -67,7 +67,7 @@ steps:
       resource "kubernetes_pod" "$(ProjectUID)" {
         metadata {
           name = "$(ProjectUID)"
-      	namespace = "$(CustomerUID)"
+      	  namespace = "$(CustomerUID)"
           labels = {
             app = "$(ProjectUID)"
           }

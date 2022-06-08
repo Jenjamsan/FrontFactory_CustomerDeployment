@@ -26,32 +26,32 @@ steps:
         config_context = "kubernetes-admin@kubernetes"
       }
       
-      resource "kubernetes_namespace" "customer_namespace-$(CustomerUID)" {
+      resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
         metadata {
-          name = "customer_namespace-$(CustomerUID)"
+          name = "customer-namespace-$(CustomerUID)"
         }
       }
       
       resource "kubernetes_secret" "regcred" {
         metadata {
           name = "regcred"
-      	  namespace = "customer_namespace-$(CustomerUID)"
+      	  namespace = "customer-namespace-$(CustomerUID)"
         }
         data = {
           ".dockerconfigjson" = "${file("~/.docker/config.json")}"
         }
         type = "kubernetes.io/dockerconfigjson"
-        depends_on = [kubernetes_namespace.customer_namespace-$(CustomerUID)]
+        depends_on = [kubernetes_namespace.customer-namespace-$(CustomerUID)]
       }
 
-      resource "kubernetes_service" "customer_service-$(ProjectUID)" {
+      resource "kubernetes_service" "customer-service-$(ProjectUID)" {
         metadata {
           name = "service-$(ProjectUID)"
-      	  namespace = "$(CustomerUID)"
+      	  namespace = "customer-namespace-$(CustomerUID)"
         }
         spec {
           selector = {
-            app = kubernetes_pod.customer_pod-$(ProjectUID).metadata.0.labels.app
+            app = kubernetes_pod.customer-pod-$(ProjectUID).metadata.0.labels.app
           }
           session_affinity = "ClientIP"
           port {
@@ -63,19 +63,18 @@ steps:
         }
       }
       
-      resource "kubernetes_pod" "customer_pod-$(ProjectUID)" {
+      resource "kubernetes_pod" "customer-pod-$(ProjectUID)" {
         metadata {
-          name = "$(ProjectUID)"
-      	  namespace = "$(CustomerUID)"
+          name = "customer-pod-$(ProjectUID)"
+      	  namespace = "customer-namespace-$(CustomerUID)"
           labels = {
-            app = "$(ProjectUID)"
+            app = "customer-pod-$(ProjectUID)"
           }
         }
-      
         spec {
           container {
             image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
-            name  = "$(ProjectUID)"
+            name  = "customer-pod-$(ProjectUID)"
           }
           image_pull_secrets {
             name = "regcred"

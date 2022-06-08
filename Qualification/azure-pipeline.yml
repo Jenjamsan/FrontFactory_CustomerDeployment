@@ -38,7 +38,7 @@ steps:
       	  namespace = "$(CustomerUID)"
         }
         data = {
-          .dockerconfigjson = "ewoJImF1dGhzIjogewoJCSJuZXh1cy1yZWdpc3RyeS5mcm9udGZhY3RvcnkubG9jYWwiOiB7CgkJCSJhdXRoIjogIllXUnRhVzQ2VjJG>"
+          ".dockerconfigjson" = "ewoJImF1dGhzIjogewoJCSJuZXh1cy1yZWdpc3RyeS5mcm9udGZhY3RvcnkubG9jYWwiOiB7CgkJCSJhdXRoIjogIllXUnRhVzQ2VjJG>"
         }
         type = "kubernetes.io/dockerconfigjson"
       }

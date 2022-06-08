@@ -43,9 +43,7 @@ steps:
         type = "kubernetes.io/dockerconfigjson"
         depends_on = [kubernetes_namespace.customer_$(CustomerUID)]
       }
-      
-      
-      
+
       resource "kubernetes_service" "customer_$(ProjectUID)-service" {
         metadata {
           name = "$(ProjectUID)-service"

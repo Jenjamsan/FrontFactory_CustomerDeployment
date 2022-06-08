@@ -36,7 +36,7 @@ steps:
     containerRegistry: 'acrff'
     repository: 'customer/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
-    Dockerfile: '$(Build.SourcesDirectory)/temp2/$(zipName)/dockerfile'
+    Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'
     tags: $(ProjectVersion)
 
 - task: file-creator@6

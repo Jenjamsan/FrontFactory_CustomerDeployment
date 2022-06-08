@@ -91,7 +91,7 @@ steps:
     script: |
       # Write your commands here
       terraform init
-      terraform workspace create $(CustomerUID)
+      terraform workspace new $(CustomerUID)
       terraform workspace select $(CustomerUID)
       terraform validate
       terraform apply

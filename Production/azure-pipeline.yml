@@ -108,31 +108,14 @@ steps:
     backendAzureRmContainerName: 'terraform'
     backendAzureRmKey: 'terraform.tfstate'
 
-- task: TerraformTaskV3@3
+- task: AzureCLI@2
   inputs:
-    provider: 'azurerm'
-    command: 'custom'
-    customCommand: 'workspace new $(CustomerUID)'
-    outputTo: 'console'
-    environmentServiceNameAzureRM: 'frontfactoryprod'
-
-- task: TerraformTaskV3@3
-  inputs:
-    provider: 'azurerm'
-    command: 'custom'
-    customCommand: 'workspace select $(CustomerUID)'
-    outputTo: 'console'
-    environmentServiceNameAzureRM: 'frontfactoryprod'
-
-
-- task: TerraformTaskV3@3
-  inputs:
-    provider: 'azurerm'
-    command: 'validate'
-
-- task: TerraformTaskV3@3
-  inputs:
-    provider: 'azurerm'
-    command: 'apply'
-    commandOptions: '-input=false -auto-approve'
-    environmentServiceNameAzureRM: 'frontfactoryprod'
+    azureSubscription: $(azureResourceManagerConnection)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      terraform workspace new $1
+      terraform workspace select $1
+      terraform validate
+      terraform apply -input=false -auto-approve
+    arguments: '$(CustomerUID)'

@@ -87,9 +87,6 @@ steps:
             image = "acrff.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
             name  = "$(ProjectUID)"
           }
-          image_pull_secrets {
-            name = "regcred"
-          }
         }
       }
     fileoverwrite: true

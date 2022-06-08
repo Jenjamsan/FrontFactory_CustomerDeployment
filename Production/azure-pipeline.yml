@@ -84,7 +84,7 @@ steps:
       
         spec {
           container {
-            image = "https://acrff.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+            image = "acrff.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
             name  = "$(ProjectUID)"
           }
           image_pull_secrets {

@@ -17,6 +17,8 @@ steps:
     scriptLocation: inlineScript
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(zipName)'
     inlineScript: |
+     az account set --subscription 25fd2547-387b-4b6e-bdbc-e94b0a03af2a
+     az aks get-credentials --resource-group frontfactory --name aksff
      mkdir -p $1/temp
      mkdir -p $1/temp2
      az storage file download --path "projects/$2/$5/$6/$7.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
@@ -36,3 +38,123 @@ steps:
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/$(zipName)/dockerfile'
     tags: $(ProjectVersion)
+
+- task: file-creator@6
+  inputs:
+    filepath: 'main.tf'
+    filecontent: |
+      ddd
+      rfr 
+    fileoverwrite: true
+
+- task: file-creator@6
+  inputs:
+    filepath: 'main.tf'
+    filecontent: |
+      provider "kubernetes" {
+        config_path    = "~/.kube/config"
+        config_context = "aksff"
+      }
+      
+      resource "kubernetes_namespace" "customer_$(CustomerUID)" {
+        metadata {
+          name = "$(CustomerUID)"
+        }
+      }
+      
+      resource "kubernetes_secret" "regcred" {
+        metadata {
+          name = "regcred"
+      	  namespace = "$(CustomerUID)"
+        }
+        data = {
+          ".dockerconfigjson" = "$(dockerconfigjson)"
+        }
+        type = "kubernetes.io/dockerconfigjson"
+      }
+      
+      
+      
+      resource "kubernetes_service" "customer_$(ProjectUID)-service" {
+        metadata {
+          name = "$(ProjectUID)-service"
+      	  namespace = "$(CustomerUID)"
+        }
+        spec {
+          selector = {
+            app = kubernetes_pod.customer_$(ProjectUID).metadata.0.labels.app
+          }
+          session_affinity = "ClientIP"
+          port {
+            port        = 80
+            target_port = 80
+          }
+      
+          type = "LoadBalancer"
+        }
+      }
+      
+      resource "kubernetes_pod" "customer_$(ProjectUID)" {
+        metadata {
+          name = "$(ProjectUID)"
+      	  namespace = "$(CustomerUID)"
+          labels = {
+            app = "$(ProjectUID)"
+          }
+        }
+      
+        spec {
+          container {
+            image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+            name  = "$(ProjectUID)"
+          }
+          image_pull_secrets {
+            name = "regcred"
+          }
+        }
+      depends_on = [kubernetes_secret.regcred]
+      }
+    fileoverwrite: true
+
+- task: TerraformInstaller@0
+  inputs:
+    terraformVersion: 'latest'
+
+- task: TerraformTaskV3@3
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    backendServiceArm: $(azureResourceManagerConnection)
+    backendAzureRmResourceGroupName: 'frontfactory'
+    backendAzureRmStorageAccountName: 'storageff'
+    backendAzureRmContainerName: 'terraform'
+    backendAzureRmKey: 'terraform.tfstate'
+
+- task: TerraformTaskV3@3
+  inputs:
+    provider: 'azurerm'
+    command: 'custom'
+    customCommand: 'workspace new $(CustomerUID)'
+    outputTo: 'console'
+    environmentServiceNameAzureRM: 'frontfactoryprod'
+
+- task: TerraformTaskV3@3
+  inputs:
+    provider: 'azurerm'
+    command: 'custom'
+    customCommand: 'workspace select $(CustomerUID)'
+    outputTo: 'console'
+    environmentServiceNameAzureRM: 'frontfactoryprod'
+
+
+- task: TerraformTaskV3@3
+  inputs:
+    provider: 'azurerm'
+    command: 'validate'
+
+- task: TerraformTaskV3@3
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    commandOptions: '-input=false -auto-approve'
+    environmentServiceNameAzureRM: 'frontfactoryprod'

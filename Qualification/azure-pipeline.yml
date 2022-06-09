@@ -16,6 +16,7 @@ steps:
       docker login -u $(DOCKER_LOGIN) -p $(DOCKER_PASSWORD) nexus-registry.frontfactory.local
       docker build . -t nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)
       docker push nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)
+      az login -u $(AZ_LOGIN) -p $(AZ_PASSWORD)
 
 - task: file-creator@6
   inputs:

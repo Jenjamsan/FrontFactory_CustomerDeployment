@@ -57,18 +57,6 @@ steps:
           key                   = "terraform.tfstate"
         }
       }
-      required_providers {
-        azurerm = {
-          source  = "hashicorp/azurerm"
-          version = "=2.52.0"
-        }
-      }
-      backend "azurerm" {
-        resource_group_name   = "frontfactory"
-        storage_account_name  = "storageff"
-        container_name        = "terraform"
-        key                   = "terraform.tfstate"
-      }
       provider "kubernetes" {
         config_path    = "~/.kube/config"
         config_context = "aksff"

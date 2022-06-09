@@ -43,6 +43,20 @@ steps:
   inputs:
     filepath: 'main.tf'
     filecontent: |
+      terraform {
+        required_providers {
+          azurerm = {
+            source  = "hashicorp/azurerm"
+            version = "=2.52.0"
+          }
+        }
+        backend "azurerm" {
+          resource_group_name   = "frontfactory"
+          storage_account_name  = "storageff"
+          container_name        = "terraform"
+          key                   = "terraform.tfstate"
+        }
+      }
       required_providers {
         azurerm = {
           source  = "hashicorp/azurerm"

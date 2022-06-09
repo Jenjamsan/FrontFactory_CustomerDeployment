@@ -21,78 +21,80 @@ steps:
   inputs:
     filepath: 'main.tf'
     filecontent: |
-      required_providers {
-        azurerm = {
-          source  = "hashicorp/azurerm"
-          version = "=2.52.0"
-        }
-      }
-      backend "azurerm" {
-        resource_group_name   = "frontfactory"
-        storage_account_name  = "storageff"
-        container_name        = "terraformqualif"
-        key                   = "terraform.tfstate"
-      }
-      provider "kubernetes" {
-        config_path    = "~/.kube/config"
-        config_context = "kubernetes-admin@kubernetes"
-      }
-      
-      resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
-        metadata {
-          name = "customer-namespace-$(CustomerUID)"
-        }
-      }
-      
-      resource "kubernetes_secret" "regcred" {
-        metadata {
-          name = "regcred"
-      	  namespace = "customer-namespace-$(CustomerUID)"
-        }
-        data = {
-          ".dockerconfigjson" = "${file("~/.docker/config.json")}"
-        }
-        type = "kubernetes.io/dockerconfigjson"
-        depends_on = [kubernetes_namespace.customer-namespace-$(CustomerUID)]
-      }
-
-      resource "kubernetes_service" "customer-service-$(ProjectUID)" {
-        metadata {
-          name = "service-$(ProjectUID)"
-      	  namespace = "customer-namespace-$(CustomerUID)"
-        }
-        spec {
-          selector = {
-            app = kubernetes_pod.customer-pod-$(ProjectUID).metadata.0.labels.app
-          }
-          session_affinity = "ClientIP"
-          port {
-            port        = 80
-            target_port = 80
-          }
-      
-          type = "LoadBalancer"
-        }
-      }
-      
-      resource "kubernetes_pod" "customer-pod-$(ProjectUID)" {
-        metadata {
-          name = "customer-pod-$(ProjectUID)"
-      	  namespace = "customer-namespace-$(CustomerUID)"
-          labels = {
-            app = "customer-pod-$(ProjectUID)"
+      terraform {
+        required_providers {
+          azurerm = {
+            source  = "hashicorp/azurerm"
+            version = "=2.52.0"
           }
         }
-        spec {
-          container {
-            image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
-            name  = "customer-pod-$(ProjectUID)"
+        backend "azurerm" {
+          resource_group_name   = "frontfactory"
+          storage_account_name  = "storageff"
+          container_name        = "terraformqualif"
+          key                   = "terraform.tfstate"
+        }
+        provider "kubernetes" {
+          config_path    = "~/.kube/config"
+          config_context = "kubernetes-admin@kubernetes"
+        }
+        
+        resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
+          metadata {
+            name = "customer-namespace-$(CustomerUID)"
           }
-          image_pull_secrets {
+        }
+        
+        resource "kubernetes_secret" "regcred" {
+          metadata {
             name = "regcred"
+            namespace = "customer-namespace-$(CustomerUID)"
+          }
+          data = {
+            ".dockerconfigjson" = "${file("~/.docker/config.json")}"
+          }
+          type = "kubernetes.io/dockerconfigjson"
+          depends_on = [kubernetes_namespace.customer-namespace-$(CustomerUID)]
+        }
+
+        resource "kubernetes_service" "customer-service-$(ProjectUID)" {
+          metadata {
+            name = "service-$(ProjectUID)"
+            namespace = "customer-namespace-$(CustomerUID)"
+          }
+          spec {
+            selector = {
+              app = kubernetes_pod.customer-pod-$(ProjectUID).metadata.0.labels.app
+            }
+            session_affinity = "ClientIP"
+            port {
+              port        = 80
+              target_port = 80
+            }
+        
+            type = "LoadBalancer"
           }
         }
-      depends_on = [kubernetes_secret.regcred]
+        
+        resource "kubernetes_pod" "customer-pod-$(ProjectUID)" {
+          metadata {
+            name = "customer-pod-$(ProjectUID)"
+            namespace = "customer-namespace-$(CustomerUID)"
+            labels = {
+              app = "customer-pod-$(ProjectUID)"
+            }
+          }
+          spec {
+            container {
+              image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+              name  = "customer-pod-$(ProjectUID)"
+            }
+            image_pull_secrets {
+              name = "regcred"
+            }
+          }
+        depends_on = [kubernetes_secret.regcred]
+        }
       }
     fileoverwrite: true
 

@@ -33,7 +33,7 @@ steps:
   
 - task: Docker@2
   inputs:
-    containerRegistry: 'acrff'
+    containerRegistry: 'acrfrontfactoryprod'
     repository: 'customer/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'
@@ -98,7 +98,7 @@ steps:
       
         spec {
           container {
-            image = "acrff.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+            image = "acrfrontfactoryprod.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
             name  = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           }
         }

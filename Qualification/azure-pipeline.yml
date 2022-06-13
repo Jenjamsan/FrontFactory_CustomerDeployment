@@ -59,14 +59,14 @@ steps:
         depends_on = [kubernetes_namespace.customer-namespace-$(CustomerUID)]
       }
 
-      resource "kubernetes_service" "customer-service-$(ProjectUID)" {
+      resource "kubernetes_service" "customer-service-$(ProjectUID)-$(CustomerUID)" {
         metadata {
-          name = "service-$(ProjectUID)"
+          name = "service-$(ProjectUID)-$(CustomerUID)"
           namespace = "customer-namespace-$(CustomerUID)"
         }
         spec {
           selector = {
-            app = kubernetes_pod.customer-pod-$(ProjectUID).metadata.0.labels.app
+            app = kubernetes_pod.customer-pod-$(ProjectUID)-$(CustomerUID).metadata.0.labels.app
           }
           session_affinity = "ClientIP"
           port {
@@ -78,18 +78,18 @@ steps:
         }
       }
       
-      resource "kubernetes_pod" "customer-pod-$(ProjectUID)" {
+      resource "kubernetes_pod" "customer-pod-$(ProjectUID)-$(CustomerUID)" {
         metadata {
-          name = "customer-pod-$(ProjectUID)"
+          name = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           namespace = "customer-namespace-$(CustomerUID)"
           labels = {
-            app = "customer-pod-$(ProjectUID)"
+            app = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           }
         }
         spec {
           container {
             image = "nexus-registry.frontfactory.local/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
-            name  = "customer-pod-$(ProjectUID)"
+            name  = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           }
           image_pull_secrets {
             name = "regcred"

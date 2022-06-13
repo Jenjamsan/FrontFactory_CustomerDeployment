@@ -17,11 +17,11 @@ steps:
     scriptLocation: inlineScript
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName)'
     inlineScript: |
-     az account set --subscription 25fd2547-387b-4b6e-bdbc-e94b0a03af2a
-     az aks get-credentials --resource-group frontfactory --name aksff
+     az account set --subscription 32f3494c-80c6-4f55-971a-9c62509839a5
+     az aks get-credentials --resource-group rgfrontfactoryprod --name aksfrontfactoryprod
      mkdir -p $1/temp
      mkdir -p $1/temp2
-     az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name storageff --dest "$1/temp" --connection-string "$4"
+     az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprod --dest "$1/temp" --connection-string "$4"
      ls $1/temp
      
 - task: ExtractFiles@1
@@ -51,15 +51,15 @@ steps:
           }
         }
         backend "azurerm" {
-          resource_group_name   = "frontfactory"
-          storage_account_name  = "storageff"
+          resource_group_name   = "rgfrontfactoryprod"
+          storage_account_name  = "asafrontfactoryprod"
           container_name        = "terraform"
           key                   = "terraform.tfstate"
         }
       }
       provider "kubernetes" {
         config_path    = "~/.kube/config"
-        config_context = "aksff"
+        config_context = "aksfrontfactoryprod"
       }
       
       resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
@@ -114,8 +114,8 @@ steps:
     provider: 'azurerm'
     command: 'init'
     backendServiceArm: $(azureResourceManagerConnection)
-    backendAzureRmResourceGroupName: 'frontfactory'
-    backendAzureRmStorageAccountName: 'storageff'
+    backendAzureRmResourceGroupName: 'rgfrontfactoryprod'
+    backendAzureRmStorageAccountName: 'asafrontfactoryprod'
     backendAzureRmContainerName: 'terraform'
     backendAzureRmKey: 'terraform.tfstate'
 

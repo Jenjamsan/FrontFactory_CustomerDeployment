@@ -54,6 +54,8 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: |
+      az account set --subscription 32f3494c-80c6-4f55-971a-9c62509839a5
+      az aks get-credentials --resource-group rgfrontfactoryprod --name aksfrontfactoryprod
       terraform workspace select $2
       terraform destroy --target kubernetes_service.customer-service-$1-$2
       terraform destroy --target kubernetes_pod.customer-pod-$1-$2

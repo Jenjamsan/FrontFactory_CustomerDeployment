@@ -15,7 +15,7 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(zipName)'
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName)'
     inlineScript: |
      az account set --subscription 25fd2547-387b-4b6e-bdbc-e94b0a03af2a
      az aks get-credentials --resource-group frontfactory --name aksff
@@ -26,7 +26,7 @@ steps:
      
 - task: ExtractFiles@1
   inputs:
-    archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(zipName).zip'
+    archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(dirName).zip'
     destinationFolder: '$(Build.SourcesDirectory)/temp2/'
     cleanDestinationFolder: true
     overwriteExistingFiles: false

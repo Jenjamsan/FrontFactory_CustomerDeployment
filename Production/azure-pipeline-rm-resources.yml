@@ -20,7 +20,7 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      terraform workspace select $1
-      terraform destroy --target kubernetes_service.customer-service-$1
-      terraform destroy --target kubernetes_pod.customer-pod-$1
-    arguments: '$(CustomerUID)'
+      terraform workspace select $2
+      terraform destroy --target kubernetes_service.customer-service-$1-$2
+      terraform destroy --target kubernetes_pod.customer-pod-$1-$2
+    arguments: '$(ProjectUID) $(CustomerUID)'

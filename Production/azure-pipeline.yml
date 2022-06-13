@@ -68,14 +68,14 @@ steps:
         }
       }
 
-      resource "kubernetes_service" "customer-service-$(ProjectUID)" {
+      resource "kubernetes_service" "customer-service-$(ProjectUID)-$(CustomerUID)" {
         metadata {
-          name = "customer-service-$(ProjectUID)"
+          name = "customer-service-$(ProjectUID)-$(CustomerUID)"
       	  namespace = "customer-namespace-$(CustomerUID)"
         }
         spec {
           selector = {
-            app = kubernetes_pod.customer-pod-$(ProjectUID).metadata.0.labels.app
+            app = kubernetes_pod.customer-pod-$(ProjectUID)-$(CustomerUID).metadata.0.labels.app
           }
           session_affinity = "ClientIP"
           port {
@@ -87,19 +87,19 @@ steps:
         }
       }
       
-      resource "kubernetes_pod" "customer-pod-$(ProjectUID)" {
+      resource "kubernetes_pod" "customer-pod-$(ProjectUID)-$(CustomerUID)" {
         metadata {
-          name = "customer-pod-$(ProjectUID)"
+          name = "customer-pod-$(ProjectUID)-$(CustomerUID)"
       	  namespace = "customer-namespace-$(CustomerUID)"
           labels = {
-            app = "customer-pod-$(ProjectUID)"
+            app = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           }
         }
       
         spec {
           container {
             image = "acrff.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
-            name  = "$(ProjectUID)"
+            name  = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           }
         }
       }

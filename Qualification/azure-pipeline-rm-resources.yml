@@ -10,5 +10,5 @@ steps:
     targetType: 'inline'
     script: |
       terraform workspace select $(CustomerUID)
-      terraform destroy --target kubernetes_service.customer-service-$1
-      terraform destroy --target kubernetes_pod.customer-pod-$1
+      terraform destroy --target kubernetes_service.customer-service-$(ProjectUID)-$(CustomerUID)
+      terraform destroy --target kubernetes_pod.customer-pod-$(ProjectUID)-$(CustomerUID)

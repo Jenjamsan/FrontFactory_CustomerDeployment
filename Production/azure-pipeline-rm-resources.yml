@@ -59,3 +59,4 @@ steps:
       terraform workspace select $2
       terraform apply -input=false -auto-approve
     arguments: '$(ProjectUID) $(CustomerUID)'
+    failOnStandardError: false

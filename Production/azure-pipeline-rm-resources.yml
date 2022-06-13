@@ -10,6 +10,30 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+- task: file-creator@6
+  inputs:
+    filepath: 'main.tf'
+    filecontent: |
+      terraform {
+        required_providers {
+          azurerm = {
+            source  = "hashicorp/azurerm"
+            version = "=2.52.0"
+          }
+        }
+        backend "azurerm" {
+          resource_group_name   = "rgfrontfactoryprod"
+          storage_account_name  = "asafrontfactoryprod"
+          container_name        = "terraform"
+          key                   = "terraform.tfstate"
+        }
+      }
+      provider "kubernetes" {
+        config_path    = "~/.kube/config"
+        config_context = "aksfrontfactoryprod"
+      }
+    fileoverwrite: true
+
 - task: TerraformInstaller@0
   inputs:
     terraformVersion: 'latest'
@@ -23,7 +47,6 @@ steps:
     backendAzureRmStorageAccountName: 'asafrontfactoryprod'
     backendAzureRmContainerName: 'terraform'
     backendAzureRmKey: 'terraform.tfstate'
-
 
 - task: AzureCLI@2
   inputs:

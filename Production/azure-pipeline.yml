@@ -67,7 +67,7 @@ steps:
           name = "customer-namespace-$(CustomerUID)"
         }
       }
-      
+
       resource "kubernetes_service" "customer-service-$(ProjectUID)" {
         metadata {
           name = "customer-service-$(ProjectUID)"

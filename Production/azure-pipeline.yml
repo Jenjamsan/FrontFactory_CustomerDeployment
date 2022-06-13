@@ -128,5 +128,5 @@ steps:
       terraform workspace new $1
       terraform workspace select $1
       terraform validate
-      terraform apply -input=false -auto-approve -lock=false
+      terraform apply -input=false -auto-approve
     arguments: '$(CustomerUID)'

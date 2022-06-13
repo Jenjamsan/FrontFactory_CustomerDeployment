@@ -1,0 +1,14 @@
+pool:
+  name: frontfactory
+
+steps:
+- task: TerraformInstaller@0
+  inputs:
+    terraformVersion: 'latest'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      terraform workspace select $(CustomerUID)
+      terraform destroy --target kubernetes_service.customer-service-$1
+      terraform destroy --target kubernetes_pod.customer-pod-$1

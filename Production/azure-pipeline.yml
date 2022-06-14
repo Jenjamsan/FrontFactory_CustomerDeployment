@@ -138,6 +138,5 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: |
       sleep 10
-      kubectl get svc customer-service-$(ProjectUID)-$(CustomerUID) -n customer-namespace-$(CustomerUID) -o jsonpath="{.status.loadBalancer.ingress[*].ip}"
-    arguments: '$(CustomerUID)'
-    
+      kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}"
+    arguments: '$(CustomerUID) $(ProjectUID)'

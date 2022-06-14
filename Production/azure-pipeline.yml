@@ -140,3 +140,4 @@ steps:
       sleep 10
       kubectl get svc customer-service-$(ProjectUID)-$(CustomerUID) -n customer-namespace-$(CustomerUID) -o jsonpath="{.status.loadBalancer.ingress[*].ip}"
     arguments: '$(CustomerUID)'
+    

@@ -130,3 +130,13 @@ steps:
       terraform validate
       terraform apply -input=false -auto-approve
     arguments: '$(CustomerUID)'
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: $(azureResourceManagerConnection)
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      sleep 10
+      kubectl get svc customer-service-$(ProjectUID)-$(CustomerUID) -n customer-namespace-$(CustomerUID) -o jsonpath="{.status.loadBalancer.ingress[*].ip}"
+    arguments: '$(CustomerUID)'

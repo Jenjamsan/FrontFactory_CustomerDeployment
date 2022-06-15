@@ -15,14 +15,9 @@ steps:
     azureSubscription: 'FF-SA'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
+    arguments: $(KEYCLOAK_CLIENT_ID) $(KEYCLOAK_USERNAME) $(KEYCLOAK_PASSWORD) $(KEYCLOAK_URL)
     inlineScript: |
-      curl --location --request POST 'http://20.238.233.120:8080/realms/frontfactory/protocol/openid-connect/token' \
-      --header 'Content-Type: application/x-www-form-urlencoded' \
-      --data-urlencode 'client_id=front_factory_shop' \
-      --data-urlencode 'grant_type=password' \
-      --data-urlencode 'username=test' \
-      --data-urlencode 'password=test' > test;
-      cat test
+        curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token"
       
 - task: AzureCLI@1
   displayName: 'Azure CLI '

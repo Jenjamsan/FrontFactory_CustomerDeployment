@@ -20,7 +20,7 @@ steps:
         echo "curl -d client_id=$1&grant_type=password&username=$2&password=$3 -H Content-Type: application/x-www-form-urlencoded $4/realms/frontfactory/protocol/openid-connect/token"
         KEYCLOAK_RESPONSE=$(curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token")
         KEYCLOAK_ACCESS_TOKEN=$(echo "$KEYCLOAK_RESPONSE" | jq '.access_token')
-        echo $KEYCLOAK_ACCESS_TOKEN
+        ##vso[task.setvariable variable=KEYCLOAK_ACCESS_TOKEN;isOutput=true]$KEYCLOAK_ACCESS_TOKEN
 - task: AzureCLI@1
   displayName: 'Azure CLI '
   inputs:
@@ -28,6 +28,7 @@ steps:
     scriptLocation: inlineScript
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName)'
     inlineScript: |
+     echo $KEYCLOAK_ACCESS_TOKEN
      az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
      az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
      mkdir -p $1/temp

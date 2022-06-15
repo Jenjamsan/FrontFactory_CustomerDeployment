@@ -140,3 +140,12 @@ steps:
       sleep 10
       kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}"
     arguments: '$(CustomerUID) $(ProjectUID)'
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'FF-SA'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+       #Get token keycloak
+       #Call avec IP + Etat

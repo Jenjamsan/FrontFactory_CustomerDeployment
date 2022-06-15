@@ -10,6 +10,20 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'FF-SA'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      curl --location --request POST 'http://20.238.233.120:8080/realms/frontfactory/protocol/openid-connect/token' \
+      --header 'Content-Type: application/x-www-form-urlencoded' \
+      --data-urlencode 'client_id=front_factory_shop' \
+      --data-urlencode 'grant_type=password' \
+      --data-urlencode 'username=test' \
+      --data-urlencode 'password=test' > test;
+      cat test
+
 - task: InvokeRESTAPI@1
   inputs:
     connectionType: 'connectedServiceName'

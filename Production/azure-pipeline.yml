@@ -17,8 +17,9 @@ steps:
     scriptLocation: 'inlineScript'
     arguments: $(KEYCLOAK_CLIENT_ID) $(KEYCLOAK_USERNAME) $(KEYCLOAK_PASSWORD) $(KEYCLOAK_URL)
     inlineScript: |
-        curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token"
-      
+        echo "curl -d client_id=$1&grant_type=password&username=$2&password=$3 -H Content-Type: application/x-www-form-urlencoded $4/realms/frontfactory/protocol/openid-connect/token"
+        a=$(curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token")
+        echo "$a token"
 - task: AzureCLI@1
   displayName: 'Azure CLI '
   inputs:

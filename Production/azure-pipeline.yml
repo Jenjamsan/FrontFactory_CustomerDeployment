@@ -11,6 +11,7 @@ pool:
 
 steps:
 - task: AzureCLI@2
+  name: keycloak
   inputs:
     azureSubscription: 'FF-SA'
     scriptType: 'bash'
@@ -26,9 +27,9 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName) $(KEYCLOAK_ACCESS_TOKEN)' 
+    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName) $(keycloak.KEYCLOAK_ACCESS_TOKEN)' 
     inlineScript: |
-     echo "$(KEYCLOAK_ACCESS_TOKEN)"
+     echo "$(keycloak.KEYCLOAK_ACCESS_TOKEN)"
      echo "$8"
      az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
      az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2

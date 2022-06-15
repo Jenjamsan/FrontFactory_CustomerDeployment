@@ -17,11 +17,11 @@ steps:
     scriptLocation: inlineScript
     arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName)'
     inlineScript: |
-     az account set --subscription 32f3494c-80c6-4f55-971a-9c62509839a5
-     az aks get-credentials --resource-group rgfrontfactoryprod --name aksfrontfactoryprod
+     az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
+     az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
      mkdir -p $1/temp
      mkdir -p $1/temp2
-     az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprod --dest "$1/temp" --connection-string "$4"
+     az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprodv2 --dest "$1/temp" --connection-string "$4"
      ls $1/temp
      
 - task: ExtractFiles@1
@@ -33,7 +33,7 @@ steps:
   
 - task: Docker@2
   inputs:
-    containerRegistry: 'acrfrontfactoryprod'
+    containerRegistry: 'acrfrontfactoryprodv2'
     repository: 'customer/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'
@@ -51,15 +51,15 @@ steps:
           }
         }
         backend "azurerm" {
-          resource_group_name   = "rgfrontfactoryprod"
-          storage_account_name  = "asafrontfactoryprod"
+          resource_group_name   = "rgfrontfactoryprodv2"
+          storage_account_name  = "asafrontfactoryprodv2"
           container_name        = "terraform"
           key                   = "terraform.tfstate"
         }
       }
       provider "kubernetes" {
         config_path    = "~/.kube/config"
-        config_context = "aksfrontfactoryprod"
+        config_context = "aksfrontfactoryprodv2"
       }
       
       resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
@@ -98,7 +98,7 @@ steps:
       
         spec {
           container {
-            image = "acrfrontfactoryprod.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+            image = "acrfrontfactoryprodv2.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
             name  = "customer-pod-$(ProjectUID)-$(CustomerUID)"
           }
         }
@@ -114,8 +114,8 @@ steps:
     provider: 'azurerm'
     command: 'init'
     backendServiceArm: $(azureResourceManagerConnection)
-    backendAzureRmResourceGroupName: 'rgfrontfactoryprod'
-    backendAzureRmStorageAccountName: 'asafrontfactoryprod'
+    backendAzureRmResourceGroupName: 'rgfrontfactoryprodv2'
+    backendAzureRmStorageAccountName: 'asafrontfactoryprodv2'
     backendAzureRmContainerName: 'terraform'
     backendAzureRmKey: 'terraform.tfstate'
 

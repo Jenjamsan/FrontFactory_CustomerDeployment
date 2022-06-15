@@ -33,7 +33,7 @@ steps:
   
 - task: Docker@2
   inputs:
-    containerRegistry: 'acrfrontfactoryprodv2'
+    containerRegistry: 'acr'
     repository: 'customer/$(CustomerUID)/$(ProjectUID)'
     command: 'buildAndPush'
     Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'

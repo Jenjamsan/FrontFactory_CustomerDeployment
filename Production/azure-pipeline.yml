@@ -23,19 +23,6 @@ steps:
       --data-urlencode 'username=test' \
       --data-urlencode 'password=test' > test;
       cat test
-
-- task: InvokeRESTAPI@1
-  inputs:
-    connectionType: 'connectedServiceName'
-    serviceConnection: 'ffkeycloak'
-    method: 'POST'
-    headers: |
-      {
-      "Content-Type":"application/x-www-form-urlencoded", 
-      }
-    body: 'client_id=front_factory_shop&grant_type=password&username=test&password=test'
-    urlSuffix: '/realms/frontfactory/protocol/openid-connect/token'
-    waitForCompletion: 'false'
       
 - task: AzureCLI@1
   displayName: 'Azure CLI '

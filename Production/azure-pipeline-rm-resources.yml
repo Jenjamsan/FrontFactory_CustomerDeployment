@@ -22,15 +22,15 @@ steps:
           }
         }
         backend "azurerm" {
-          resource_group_name   = "rgfrontfactoryprod"
-          storage_account_name  = "asafrontfactoryprod"
+          resource_group_name   = "rgfrontfactoryprodv2"
+          storage_account_name  = "asafrontfactoryprodv2"
           container_name        = "terraform"
           key                   = "terraform.tfstate"
         }
       }
       provider "kubernetes" {
         config_path    = "~/.kube/config"
-        config_context = "aksfrontfactoryprod"
+        config_context = "aksfrontfactoryprodv2"
       }
     fileoverwrite: true
 
@@ -43,8 +43,8 @@ steps:
     provider: 'azurerm'
     command: 'init'
     backendServiceArm: $(azureResourceManagerConnection)
-    backendAzureRmResourceGroupName: 'rgfrontfactoryprod'
-    backendAzureRmStorageAccountName: 'asafrontfactoryprod'
+    backendAzureRmResourceGroupName: 'rgfrontfactoryprodv2'
+    backendAzureRmStorageAccountName: 'asafrontfactoryprodv2'
     backendAzureRmContainerName: 'terraform'
     backendAzureRmKey: 'terraform.tfstate'
 
@@ -54,8 +54,8 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      az account set --subscription 32f3494c-80c6-4f55-971a-9c62509839a5
-      az aks get-credentials --resource-group rgfrontfactoryprod --name aksfrontfactoryprod
+      az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
+      az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
       terraform workspace select $2
       terraform apply -input=false -auto-approve
     arguments: '$(ProjectUID) $(CustomerUID)'

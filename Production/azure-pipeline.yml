@@ -9,157 +9,245 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- task: AzureCLI@2
-  name: keycloak
-  inputs:
-    azureSubscription: 'FF-SA'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    arguments: $(KEYCLOAK_CLIENT_ID) $(KEYCLOAK_USERNAME) $(KEYCLOAK_PASSWORD) $(KEYCLOAK_URL)
-    inlineScript: |
-        echo "curl -d client_id=$1&grant_type=password&username=$2&password=$3 -H Content-Type: application/x-www-form-urlencoded $4/realms/frontfactory/protocol/openid-connect/token"
-        KEYCLOAK_RESPONSE=$(curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token")
-        KEYCLOAK_ACCESS_TOKEN=$(echo "$KEYCLOAK_RESPONSE" | jq '.access_token')
-        echo "##vso[task.setvariable variable=KEYCLOAK_ACCESS_TOKEN;isOutput=true]$KEYCLOAK_ACCESS_TOKEN"
-- task: AzureCLI@1
-  displayName: 'Azure CLI '
-  inputs:
-    azureSubscription: $(azureResourceManagerConnection)
-    scriptLocation: inlineScript
-    arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName) $(keycloak.KEYCLOAK_ACCESS_TOKEN)' 
-    inlineScript: |
-     echo "$(keycloak.KEYCLOAK_ACCESS_TOKEN)"
-     az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
-     az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
-     mkdir -p $1/temp
-     mkdir -p $1/temp2
-     az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprodv2 --dest "$1/temp" --connection-string "$4"
-     ls $1/temp
+jobs:
+- job: KEYCLOAK
+  steps:
+  - task: AzureCLI@2
+    name: keycloak
+    inputs:
+      azureSubscription: 'FF-SA'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      arguments: $(KEYCLOAK_CLIENT_ID) $(KEYCLOAK_USERNAME) $(KEYCLOAK_PASSWORD) $(KEYCLOAK_URL)
+      inlineScript: |
+          echo "curl -d client_id=$1&grant_type=password&username=$2&password=$3 -H Content-Type: application/x-www-form-urlencoded $4/realms/frontfactory/protocol/openid-connect/token"
+          KEYCLOAK_RESPONSE=$(curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token")
+          KEYCLOAK_ACCESS_TOKEN=$(echo "$KEYCLOAK_RESPONSE" | jq '.access_token')
+          echo "##vso[task.setvariable variable=KEYCLOAK_ACCESS_TOKEN;isOutput=true]$KEYCLOAK_ACCESS_TOKEN"
+
+- job: KEYCLOAK_FAILED
+  dependsOn: KEYCLOAK
+  condition: failed()
+  steps:
+    - script: echo "Problème d'accès à Keycloak"
      
-- task: ExtractFiles@1
-  inputs:
-    archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(dirName).zip'
-    destinationFolder: '$(Build.SourcesDirectory)/temp2/'
-    cleanDestinationFolder: true
-    overwriteExistingFiles: false
+- job: DOWNLOAD_PROJECT
+  dependsOn: KEYCLOAK
+  condition: succeeded()
+  steps:
+  - task: AzureCLI@1
+    displayName: 'DOWNLOAD_PROJECT'
+    inputs:
+      azureSubscription: $(azureResourceManagerConnection)
+      scriptLocation: inlineScript
+      arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName) $(keycloak.KEYCLOAK_ACCESS_TOKEN)' 
+      inlineScript: |
+          echo "$(keycloak.KEYCLOAK_ACCESS_TOKEN)"
+          az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
+          az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
+          mkdir -p $1/temp
+          mkdir -p $1/temp2
+          az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprodv2 --dest "$1/temp" --connection-string "$4"
+          ls $1/temp
+
+- job: DOWNLOAD_PROJECT_FAILED
+  dependsOn: DOWNLOAD_PROJECT
+  condition: failed()
   
-- task: Docker@2
-  inputs:
-    containerRegistry: 'acr'
-    repository: 'customer/$(CustomerUID)/$(ProjectUID)'
-    command: 'buildAndPush'
-    Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'
-    tags: $(ProjectVersion)
+  steps:
+    - script: echo "Problème de récupération projet"
 
-- task: file-creator@6
-  inputs:
-    filepath: 'main.tf'
-    filecontent: |
-      terraform {
-        required_providers {
-          azurerm = {
-            source  = "hashicorp/azurerm"
-            version = "=2.52.0"
+- job: UNZIP_PROJECT
+  dependsOn: DOWNLOAD_PROJECT
+  condition: succeeded()
+  steps:
+  - task: ExtractFiles@1
+    inputs:
+      archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(dirName).zip'
+      destinationFolder: '$(Build.SourcesDirectory)/temp2/'
+      cleanDestinationFolder: true
+      overwriteExistingFiles: false
+  
+- job: BUILD_PROJECT_DOCKER
+  dependsOn: UNZIP_PROJECT
+  condition: failed()
+  steps:
+    - script: echo "Problème de unzip projet"
+  
+- job: BUILD_PROJECT_DOCKER
+  dependsOn: UNZIP_PROJECT
+  condition: succeeded()
+  steps:
+  - task: Docker@2
+    inputs:
+      containerRegistry: 'acr'
+      repository: 'customer/$(CustomerUID)/$(ProjectUID)'
+      command: 'buildAndPush'
+      Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'
+      tags: $(ProjectVersion)
+
+- job: BUILD_PROJECT_DOCKER_FAILED
+  dependsOn: BUILD_PROJECT_DOCKER
+  condition: failed()
+  steps:
+    - script: echo "Problème de docker"
+
+- job: TERRAFORM_PROJECT
+  dependsOn: BUILD_PROJECT_DOCKER
+  condition: succeeded()
+  steps:
+  - task: file-creator@6
+    inputs:
+      filepath: 'main.tf'
+      filecontent: |
+        terraform {
+          required_providers {
+            azurerm = {
+              source  = "hashicorp/azurerm"
+              version = "=2.52.0"
+            }
+          }
+          backend "azurerm" {
+            resource_group_name   = "rgfrontfactoryprodv2"
+            storage_account_name  = "asafrontfactoryprodv2"
+            container_name        = "terraform"
+            key                   = "terraform.tfstate"
           }
         }
-        backend "azurerm" {
-          resource_group_name   = "rgfrontfactoryprodv2"
-          storage_account_name  = "asafrontfactoryprodv2"
-          container_name        = "terraform"
-          key                   = "terraform.tfstate"
+        provider "kubernetes" {
+          config_path    = "~/.kube/config"
+          config_context = "aksfrontfactoryprodv2"
         }
-      }
-      provider "kubernetes" {
-        config_path    = "~/.kube/config"
-        config_context = "aksfrontfactoryprodv2"
-      }
-      
-      resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
-        metadata {
-          name = "customer-namespace-$(CustomerUID)"
-        }
-      }
-
-      resource "kubernetes_service" "customer-service-$(ProjectUID)-$(CustomerUID)" {
-        metadata {
-          name = "customer-service-$(ProjectUID)-$(CustomerUID)"
-      	  namespace = "customer-namespace-$(CustomerUID)"
-        }
-        spec {
-          selector = {
-            app = kubernetes_pod.customer-pod-$(ProjectUID)-$(CustomerUID).metadata.0.labels.app
-          }
-          session_affinity = "ClientIP"
-          port {
-            port        = 80
-            target_port = 80
-          }
-      
-          type = "LoadBalancer"
-        }
-      }
-      
-      resource "kubernetes_pod" "customer-pod-$(ProjectUID)-$(CustomerUID)" {
-        metadata {
-          name = "customer-pod-$(ProjectUID)-$(CustomerUID)"
-      	  namespace = "customer-namespace-$(CustomerUID)"
-          labels = {
-            app = "customer-pod-$(ProjectUID)-$(CustomerUID)"
+        
+        resource "kubernetes_namespace" "customer-namespace-$(CustomerUID)" {
+          metadata {
+            name = "customer-namespace-$(CustomerUID)"
           }
         }
-      
-        spec {
-          container {
-            image = "acrfrontfactoryprodv2.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
-            name  = "customer-pod-$(ProjectUID)-$(CustomerUID)"
+
+        resource "kubernetes_service" "customer-service-$(ProjectUID)-$(CustomerUID)" {
+          metadata {
+            name = "customer-service-$(ProjectUID)-$(CustomerUID)"
+            namespace = "customer-namespace-$(CustomerUID)"
+          }
+          spec {
+            selector = {
+              app = kubernetes_pod.customer-pod-$(ProjectUID)-$(CustomerUID).metadata.0.labels.app
+            }
+            session_affinity = "ClientIP"
+            port {
+              port        = 80
+              target_port = 80
+            }
+        
+            type = "LoadBalancer"
           }
         }
-      }
-    fileoverwrite: true
+        
+        resource "kubernetes_pod" "customer-pod-$(ProjectUID)-$(CustomerUID)" {
+          metadata {
+            name = "customer-pod-$(ProjectUID)-$(CustomerUID)"
+            namespace = "customer-namespace-$(CustomerUID)"
+            labels = {
+              app = "customer-pod-$(ProjectUID)-$(CustomerUID)"
+            }
+          }
+        
+          spec {
+            container {
+              image = "acrfrontfactoryprodv2.azurecr.io/customer/$(CustomerUID)/$(ProjectUID):$(ProjectVersion)"
+              name  = "customer-pod-$(ProjectUID)-$(CustomerUID)"
+            }
+          }
+        }
+      fileoverwrite: true
 
-- task: TerraformInstaller@0
-  inputs:
-    terraformVersion: 'latest'
+- job: TERRAFORM_PROJECT_FAILED
+  dependsOn: TERRAFORM_PROJECT
+  condition: failed()
+  steps:
+    - script: echo "Problème terraform"
 
-- task: TerraformTaskV3@3
-  inputs:
-    provider: 'azurerm'
-    command: 'init'
-    backendServiceArm: $(azureResourceManagerConnection)
-    backendAzureRmResourceGroupName: 'rgfrontfactoryprodv2'
-    backendAzureRmStorageAccountName: 'asafrontfactoryprodv2'
-    backendAzureRmContainerName: 'terraform'
-    backendAzureRmKey: 'terraform.tfstate'
+- job: TERRAFORM_INSTALL
+  dependsOn: TERRAFORM_PROJECT
+  condition: succeeded()
+  steps:
+  - task: TerraformInstaller@0
+    inputs:
+      terraformVersion: 'latest'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: $(azureResourceManagerConnection)
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      terraform workspace new $1
-      terraform workspace select $1
-      terraform validate
-      terraform apply -input=false -auto-approve
-    arguments: '$(CustomerUID)'
+- job: TERRAFORM_INIT
+  dependsOn: TERRAFORM_INSTALL
+  condition: succeeded()
+  steps:
+  - task: TerraformTaskV3@3
+    inputs:
+      provider: 'azurerm'
+      command: 'init'
+      backendServiceArm: $(azureResourceManagerConnection)
+      backendAzureRmResourceGroupName: 'rgfrontfactoryprodv2'
+      backendAzureRmStorageAccountName: 'asafrontfactoryprodv2'
+      backendAzureRmContainerName: 'terraform'
+      backendAzureRmKey: 'terraform.tfstate'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: $(azureResourceManagerConnection)
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      sleep 10
-      kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}"
-    arguments: '$(CustomerUID) $(ProjectUID)'
+- job: TERRAFORM_INIT_FAILD
+  dependsOn: TERRAFORM_INIT
+  condition: failed()
+  steps:
+    - script: echo "Problème terraform init"
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'FF-SA'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-       #Get token keycloak
+- job: TERRAFORM_DEPLOY
+  dependsOn: TERRAFORM_INIT
+  condition: succeeded()
+  steps:
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: $(azureResourceManagerConnection)
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        terraform workspace new $1
+        terraform workspace select $1
+        terraform validate
+        terraform apply -input=false -auto-approve
+      arguments: '$(CustomerUID)'
+
+- job: TERRAFORM_DEPLOY_FAILED
+  dependsOn: TERRAFORM_DEPLOY
+  condition: failed()
+  steps:
+    - script: echo "Problème terraform deploy"
+
+- job: KUBE_GET_IP
+  dependsOn: TERRAFORM_DEPLOY
+  condition: succeeded()
+  steps:
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: $(azureResourceManagerConnection)
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        sleep 10
+        ip=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
+      arguments: '$(CustomerUID) $(ProjectUID)'
+
+- job: TERRAFORM_DEPLOY_FAILED
+  dependsOn: KUBE_GET_IP
+  condition: failed()
+  steps:
+    - script: echo "Problème get ip"
+
+- job: KUBE_GET_IP
+  dependsOn: KUBE_GET_IP
+  condition: succeeded()
+  steps:
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'FF-SA'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        #Get token keycloak
        
        #Call avec IP + Etat

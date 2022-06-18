@@ -28,7 +28,8 @@ jobs:
 - job: KEYCLOAK_FAILED
   dependsOn: KEYCLOAK
   condition: failed()
-  script: 'echo keycloak failed'
+  steps:
+  - script: 'echo keycloak failed'
 
 - job: DOWNLOAD_PROJECT
   dependsOn: KEYCLOAK

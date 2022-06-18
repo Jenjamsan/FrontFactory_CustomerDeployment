@@ -27,9 +27,16 @@ jobs:
 
 - job: KEYCLOAK_FAILED
   dependsOn: KEYCLOAK
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   condition: failed()
   steps:
-    - script: echo "erreur de récup token"
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer (KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }'
 
 - job: DOWNLOAD_PROJECT
   dependsOn: KEYCLOAK
@@ -58,7 +65,7 @@ jobs:
     and(eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'), eq(dependencies.KEYCLOAK.result, 'Succeeded'))
 
   steps:
-    - script: echo "Problème de récupération projet"
+    - script: curl 
     
 
 - job: UNZIP_PROJECT

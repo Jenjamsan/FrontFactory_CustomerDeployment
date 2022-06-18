@@ -43,7 +43,6 @@ stages:
         scriptLocation: inlineScript
         arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName) $(keycloak.KEYCLOAK_ACCESS_TOKEN)' 
         inlineScript: |
-            echo "$(keycloak.KEYCLOAK_ACCESS_TOKEN)"
             az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
             az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
             mkdir -p $1/temp
@@ -86,7 +85,7 @@ stages:
       and(eq(dependencies.UNZIP_PROJECT.result, 'Failed'), eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           echo "$(KEYCLOAK_ACCESS_TOKEN) token"
@@ -116,7 +115,7 @@ stages:
     condition: and(eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Failed'), eq(dependencies.UNZIP_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -201,7 +200,7 @@ stages:
     condition: and(eq(dependencies.TERRAFORM_PROJECT.result, 'Failed'), eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -238,7 +237,7 @@ stages:
     condition: and(eq(dependencies.TERRAFORM_INIT.result, 'Failed'), eq(dependencies.TERRAFORM_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -269,7 +268,7 @@ stages:
     condition: and(eq(dependencies.TERRAFORM_DEPLOY.result, 'Failed'), eq(dependencies.TERRAFORM_INIT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -282,7 +281,7 @@ stages:
     condition: succeeded()
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
     - task: AzureCLI@2
       inputs:
@@ -309,7 +308,7 @@ stages:
     condition: and(eq(dependencies.KUBE_GET_IP.result, 'Failed'), eq(dependencies.TERRAFORM_DEPLOY.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \

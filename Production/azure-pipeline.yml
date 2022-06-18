@@ -27,16 +27,8 @@ jobs:
 
 - job: KEYCLOAK_FAILED
   dependsOn: KEYCLOAK
-  variables:
-    # map the output variable from A into this job
-    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   condition: failed()
-  steps:
-    - script: |
-        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-        --header 'Authorization: Bearer (KEYCLOAK_ACCESS_TOKEN)' \
-        --header 'Content-Type: application/json' \
-        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }'
+  script: 'echo keycloak failed'
 
 - job: DOWNLOAD_PROJECT
   dependsOn: KEYCLOAK
@@ -63,10 +55,15 @@ jobs:
     - KEYCLOAK
   condition: |
     and(eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'), eq(dependencies.KEYCLOAK.result, 'Succeeded'))
-
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: curl 
-    
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }'
 
 - job: UNZIP_PROJECT
   dependsOn: DOWNLOAD_PROJECT
@@ -85,8 +82,15 @@ jobs:
     - DOWNLOAD_PROJECT
   condition: |
     and(eq(dependencies.UNZIP_PROJECT.result, 'Failed'), eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'))
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: echo "Problème de unzip projet"
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Impossible de déziper le projet généré !", "IpAddress": null }'
   
 - job: BUILD_PROJECT_DOCKER
   dependsOn: UNZIP_PROJECT
@@ -105,8 +109,15 @@ jobs:
     - BUILD_PROJECT_DOCKER
     - UNZIP_PROJECT
   condition: and(eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Failed'), eq(dependencies.UNZIP_PROJECT.result, 'Succeeded'))
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: echo "Problème de docker"
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème rencontré avec docker !", "IpAddress": null }'
 
 - job: TERRAFORM_PROJECT
   dependsOn: BUILD_PROJECT_DOCKER
@@ -183,8 +194,15 @@ jobs:
     - TERRAFORM_PROJECT
     - BUILD_PROJECT_DOCKER
   condition: and(eq(dependencies.TERRAFORM_PROJECT.result, 'Failed'), eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Succeeded'))
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: echo "Problème terraform"
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème à la création du fichier de ressources terraform !", "IpAddress": null }'
 
 - job: TERRAFORM_INSTALL
   dependsOn: TERRAFORM_PROJECT
@@ -213,8 +231,15 @@ jobs:
     - TERRAFORM_INIT
     - TERRAFORM_PROJECT
   condition: and(eq(dependencies.TERRAFORM_INIT.result, 'Failed'), eq(dependencies.TERRAFORM_PROJECT.result, 'Succeeded'))
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: echo "Problème terraform init"
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème à l'Init de terraform !", "IpAddress": null }'
 
 - job: TERRAFORM_DEPLOY
   dependsOn: TERRAFORM_INIT
@@ -237,12 +262,22 @@ jobs:
     - TERRAFORM_DEPLOY
     - TERRAFORM_INIT
   condition: and(eq(dependencies.TERRAFORM_DEPLOY.result, 'Failed'), eq(dependencies.TERRAFORM_INIT.result, 'Succeeded'))
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: echo "Problème terraform deploy"
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème au déploiement des ressources !", "IpAddress": null }'
 
 - job: KUBE_GET_IP
   dependsOn: TERRAFORM_DEPLOY
   condition: succeeded()
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
   - task: AzureCLI@2
     inputs:
@@ -251,27 +286,28 @@ jobs:
       scriptLocation: 'inlineScript'
       inlineScript: |
         sleep 10
-        ip=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
-      arguments: '$(CustomerUID) $(ProjectUID)'
+        ip_customer=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
+        echo $ip_customer
+        #si var vide, job status failed
+        #Sinon Ok
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $3' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $2, "Error": null, "IpAddress": "$ip_customer" }'
+        
+      arguments: '$(CustomerUID) $(ProjectUID) $(KEYCLOAK_ACCESS_TOKEN)'
 
 - job: KUBE_GET_IP_FAILED
   dependsOn: 
     - KUBE_GET_IP
     - TERRAFORM_DEPLOY
   condition: and(eq(dependencies.KUBE_GET_IP.result, 'Failed'), eq(dependencies.TERRAFORM_DEPLOY.result, 'Succeeded'))
+  variables:
+    # map the output variable from A into this job
+    KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
-    - script: echo "Problème get ip"
-
-- job: EXTRA
-  dependsOn: KUBE_GET_IP
-  condition: succeeded()
-  steps:
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'FF-SA'
-      scriptType: 'bash'
-      scriptLocation: 'inlineScript'
-      inlineScript: |
-        #Get token keycloak
-       
-       #Call avec IP + Etat
+    - script: |
+        curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+        --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème de récupération IP", "IpAddress": null }'

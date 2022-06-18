@@ -116,10 +116,6 @@ steps:
           }
         }
       }
-
-      output "ProjectIP" {
-        value = kubernetes_service.customer-service-$(ProjectUID)-$(CustomerUID).load_balancer_ip
-      }
     fileoverwrite: true
 
 - task: TerraformInstaller@0
@@ -146,7 +142,6 @@ steps:
       terraform workspace select $1
       terraform validate
       terraform apply -input=false -auto-approve
-      terraform output
     arguments: '$(CustomerUID)'
 
 - task: AzureCLI@2

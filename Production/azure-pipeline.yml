@@ -88,6 +88,8 @@ jobs:
     KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
   steps:
     - script: |
+        echo "$(KEYCLOAK_ACCESS_TOKEN) token"
+        echo "$(ProjectUID) project uid"
         curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
         --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
         --header 'Content-Type: application/json' \

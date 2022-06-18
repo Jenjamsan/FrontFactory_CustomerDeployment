@@ -68,7 +68,7 @@ jobs:
       cleanDestinationFolder: true
       overwriteExistingFiles: false
   
-- job: BUILD_PROJECT_DOCKER
+- job: UNZIP_PROJECT_FAILED
   dependsOn: UNZIP_PROJECT
   condition: failed()
   steps:
@@ -239,7 +239,7 @@ jobs:
     - script: echo "Problème get ip"
 
 - job: KUBE_GET_IP
-  dependsOn: KUBE_GET_IP
+  dependsOn: TERRAFORM_DEPLOY
   condition: succeeded()
   steps:
   - task: AzureCLI@2

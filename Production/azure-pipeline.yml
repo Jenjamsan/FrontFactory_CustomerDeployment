@@ -56,10 +56,10 @@ jobs:
     - KEYCLOAK
   condition: |
     and
-      (
-        eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'),
-        eq(dependencies.KEYCLOAK.result, 'Succeeded'),
-      )
+    (
+      eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'),
+      eq(dependencies.KEYCLOAK.result, 'Succeeded'),
+    )
 
   steps:
     - script: echo "Problème de récupération projet"
@@ -82,10 +82,10 @@ jobs:
     - DOWNLOAD_PROJECT
   condition: |
     and
-      (
-        eq(dependencies.UNZIP_PROJECT.result, 'Failed'),
-        eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'),
-      )
+    (
+      eq(dependencies.UNZIP_PROJECT.result, 'Failed'),
+      eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'),
+    )
   steps:
     - script: echo "Problème de unzip projet"
   

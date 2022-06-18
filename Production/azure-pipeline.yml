@@ -232,14 +232,14 @@ jobs:
         ip=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
       arguments: '$(CustomerUID) $(ProjectUID)'
 
-- job: TERRAFORM_DEPLOY_FAILED
+- job: KUBE_GET_IP_FAILED
   dependsOn: KUBE_GET_IP
   condition: failed()
   steps:
     - script: echo "Problème get ip"
 
-- job: KUBE_GET_IP
-  dependsOn: TERRAFORM_DEPLOY
+- job: EXTRA
+  dependsOn: KUBE_GET_IP
   condition: succeeded()
   steps:
   - task: AzureCLI@2

@@ -51,11 +51,19 @@ jobs:
           ls $1/temp
 
 - job: DOWNLOAD_PROJECT_FAILED
-  dependsOn: DOWNLOAD_PROJECT
-  condition: failed()
-  
+  dependsOn: 
+    - DOWNLOAD_PROJECT
+    - KEYCLOAK
+  condition: |
+    and
+      (
+        eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'),
+        eq(dependencies.KEYCLOAK.result, 'Succeeded'),
+      )
+
   steps:
     - script: echo "Problème de récupération projet"
+    
 
 - job: UNZIP_PROJECT
   dependsOn: DOWNLOAD_PROJECT
@@ -69,8 +77,15 @@ jobs:
       overwriteExistingFiles: false
   
 - job: UNZIP_PROJECT_FAILED
-  dependsOn: UNZIP_PROJECT
-  condition: failed()
+  dependsOn: 
+    - UNZIP_PROJECT
+    - DOWNLOAD_PROJECT
+  condition: |
+    and
+      (
+        eq(dependencies.UNZIP_PROJECT.result, 'Failed'),
+        eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'),
+      )
   steps:
     - script: echo "Problème de unzip projet"
   

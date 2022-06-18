@@ -29,9 +29,8 @@ jobs:
   dependsOn: KEYCLOAK
   condition: failed()
   steps:
-    - script: |
-        echo "Problème d'accès à Keycloak"
-        
+    - script: echo "erreur de récup token"
+
 - job: DOWNLOAD_PROJECT
   dependsOn: KEYCLOAK
   condition: succeeded()

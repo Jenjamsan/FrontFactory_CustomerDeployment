@@ -94,8 +94,10 @@ jobs:
       tags: $(ProjectVersion)
 
 - job: BUILD_PROJECT_DOCKER_FAILED
-  dependsOn: BUILD_PROJECT_DOCKER
-  condition: failed()
+  dependsOn: 
+    - BUILD_PROJECT_DOCKER
+    - UNZIP_PROJECT
+  condition: and(eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Failed'), eq(dependencies.UNZIP_PROJECT.result, 'Succeeded'))
   steps:
     - script: echo "Problème de docker"
 

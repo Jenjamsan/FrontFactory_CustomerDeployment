@@ -172,8 +172,10 @@ jobs:
       fileoverwrite: true
 
 - job: TERRAFORM_PROJECT_FAILED
-  dependsOn: TERRAFORM_PROJECT
-  condition: failed()
+  dependsOn: 
+    - TERRAFORM_PROJECT
+    - BUILD_PROJECT_DOCKER
+  condition: and(eq(dependencies.TERRAFORM_PROJECT.result, 'Failed'), eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Succeeded'))
   steps:
     - script: echo "Problème terraform"
 
@@ -199,9 +201,11 @@ jobs:
       backendAzureRmContainerName: 'terraform'
       backendAzureRmKey: 'terraform.tfstate'
 
-- job: TERRAFORM_INIT_FAILD
-  dependsOn: TERRAFORM_INIT
-  condition: failed()
+- job: TERRAFORM_INIT_FAILED
+  dependsOn: 
+    - TERRAFORM_INIT
+    - TERRAFORM_PROJECT
+  condition: and(eq(dependencies.TERRAFORM_INIT.result, 'Failed'), eq(dependencies.TERRAFORM_PROJECT.result, 'Succeeded'))
   steps:
     - script: echo "Problème terraform init"
 
@@ -222,8 +226,10 @@ jobs:
       arguments: '$(CustomerUID)'
 
 - job: TERRAFORM_DEPLOY_FAILED
-  dependsOn: TERRAFORM_DEPLOY
-  condition: failed()
+  dependsOn: 
+    - TERRAFORM_DEPLOY
+    - TERRAFORM_INIT
+  condition: and(eq(dependencies.TERRAFORM_DEPLOY.result, 'Failed'), eq(dependencies.TERRAFORM_INIT.result, 'Succeeded'))
   steps:
     - script: echo "Problème terraform deploy"
 
@@ -242,8 +248,10 @@ jobs:
       arguments: '$(CustomerUID) $(ProjectUID)'
 
 - job: KUBE_GET_IP_FAILED
-  dependsOn: KUBE_GET_IP
-  condition: failed()
+  dependsOn: 
+    - KUBE_GET_IP
+    - TERRAFORM_DEPLOY
+  condition: and(eq(dependencies.KUBE_GET_IP.result, 'Failed'), eq(dependencies.TERRAFORM_DEPLOY.result, 'Succeeded'))
   steps:
     - script: echo "Problème get ip"
 

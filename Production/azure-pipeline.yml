@@ -29,8 +29,9 @@ jobs:
   dependsOn: KEYCLOAK
   condition: failed()
   steps:
-    - script: echo "Problème d'accès à Keycloak"
-     
+    - script: |
+        echo "Problème d'accès à Keycloak"
+        
 - job: DOWNLOAD_PROJECT
   dependsOn: KEYCLOAK
   condition: succeeded()

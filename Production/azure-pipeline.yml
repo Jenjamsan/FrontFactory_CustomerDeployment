@@ -85,11 +85,10 @@ stages:
       and(eq(dependencies.UNZIP_PROJECT.result, 'Failed'), eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           echo "$(KEYCLOAK_ACCESS_TOKEN) token"
-          echo "$env:KEYCLOAK_ACCESS_TOKEN token2"
           echo "$(ProjectUID) project uid"
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
           --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \

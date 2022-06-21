@@ -107,7 +107,7 @@ stages:
                 --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
                 --header 'Content-Type: application/json' \
                 --data-raw '{
-                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "ProjectId": "'"$ProjectId_NO_QUOTES"'",
                     "Error": "E1 - Erreur dans le processus de déploiement",
                     "IpAddress": null
                 }'

@@ -25,6 +25,7 @@ stages:
             KEYCLOAK_RESPONSE=$(curl -d "client_id=$1&grant_type=password&username=$2&password=$3" -H "Content-Type: application/x-www-form-urlencoded" "$4/realms/frontfactory/protocol/openid-connect/token")
             KEYCLOAK_ACCESS_TOKEN=$(echo "$KEYCLOAK_RESPONSE" | jq '.access_token')
             echo "##vso[task.setvariable variable=KEYCLOAK_ACCESS_TOKEN;isOutput=true]$KEYCLOAK_ACCESS_TOKEN"
+            
 
   - job: KEYCLOAK_FAILED
     dependsOn: KEYCLOAK
@@ -95,7 +96,15 @@ stages:
             KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
             ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
             echo $ProjectId_NO_QUOTES
-            curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -v --data-raw '{ "projectId": $ProjectId_NO_QUOTES, "error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "ipAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+            # curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -v --data-raw '{ "projectId": $ProjectId_NO_QUOTES, "error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "ipAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+            curl --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline'
+                --header 'Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES' \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "Impossible de récupérer le projet généré !",
+                    "IpAddress": null
+                }'
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
   
   - job: BUILD_PROJECT_DOCKER

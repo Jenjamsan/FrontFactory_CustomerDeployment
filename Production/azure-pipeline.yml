@@ -236,14 +236,17 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
+          KEYCLOAK_RESPONSE=$(curl -d "client_id=$3&grant_type=password&username=$4&password=$5" -H "Content-Type: application/x-www-form-urlencoded" "$6/realms/frontfactory/protocol/openid-connect/token")
+          KEYCLOAK_ACCESS_TOKEN=$(echo "$KEYCLOAK_RESPONSE" | jq '.access_token')
+          KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$KEYCLOAK_ACCESS_TOKEN")
+          ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
           az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
           az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
           sleep 10
+
           ip_customer=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
           echo $ip_customer
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": null, "IpAddress": "$ip_customer" }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
-          KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-          ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+
           curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
               --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
               --header 'Content-Type: application/json' \
@@ -253,7 +256,7 @@ stages:
                   "IpAddress": "'"$ip_customer"'"
               }'
           
-        arguments: '$(CustomerUID) $(ProjectUID) $(KEYCLOAK_ACCESS_TOKEN)'
+        arguments: '$(CustomerUID) $(ProjectUID) $(KEYCLOAK_CLIENT_ID) $(KEYCLOAK_USERNAME) $(KEYCLOAK_PASSWORD) $(KEYCLOAK_URL)'
 
   - job: KUBE_GET_IP_FAILED
     dependsOn: 

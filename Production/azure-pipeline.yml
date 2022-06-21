@@ -87,6 +87,8 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
+          KEYCLOAK_ACCESS_TOKEN=$(sed -e 's/^"//' -e 's/"$//' <<<"$KEYCLOAK_ACCESS_TOKEN")
+          echo $KEYCLOAK_ACCESS_TOKEN
           curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
 
     

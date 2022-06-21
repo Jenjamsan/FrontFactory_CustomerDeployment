@@ -126,8 +126,8 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
             KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            echo "curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
-            curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+            echo "curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
+            curl -X PAST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: TERRAFORM_PROJECT

@@ -33,7 +33,7 @@ stages:
     steps:
     - script: 'echo keycloak failed'
 
-  - job: DOWNLOAD_PROJECT
+  - job: DOWNLOAD_UNZIP_BUILD_PROJECT
     dependsOn: KEYCLOAK
     condition: succeeded()
     steps:
@@ -50,73 +50,12 @@ stages:
             mkdir -p $1/temp2
             az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprodv2 --dest "$1/temp" --connection-string "$4"
             ls $1/temp
-
-  - job: DOWNLOAD_PROJECT_FAILED
-    dependsOn: 
-      - DOWNLOAD_PROJECT
-      - KEYCLOAK
-    condition: |
-      and(eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'), eq(dependencies.KEYCLOAK.result, 'Succeeded'))
-    variables:
-      # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
-    steps:
-      - script: |
-            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
-            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
-                --header 'Content-Type: application/json' \
-                --data-raw '{
-                    "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E0 - Erreur dans le processus de déploiement",
-                    "IpAddress": null
-                }'
-
-  - job: UNZIP_PROJECT
-    dependsOn: DOWNLOAD_PROJECT
-    condition: succeeded()
-    steps:
     - task: ExtractFiles@1
       inputs:
         archiveFilePatterns: '$(Build.SourcesDirectory)/temp/$(dirName).zip'
         destinationFolder: '$(Build.SourcesDirectory)/temp2/'
         cleanDestinationFolder: true
         overwriteExistingFiles: false
-    
-  - job: UNZIP_PROJECT_FAILED
-    dependsOn: 
-      - UNZIP_PROJECT
-      - DOWNLOAD_PROJECT
-      - KEYCLOAK
-    condition: |
-      and(eq(dependencies.UNZIP_PROJECT.result, 'Failed'), eq(dependencies.DOWNLOAD_PROJECT.result, 'Succeeded'))
-    variables:
-      # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
-    steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: $(azureResourceManagerConnection)
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
-            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
-                --header 'Content-Type: application/json' \
-                --data-raw '{
-                    "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E1 - Erreur dans le processus de déploiement",
-                    "IpAddress": null
-                }'
-        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
-  
-  - job: BUILD_PROJECT_DOCKER
-    dependsOn: UNZIP_PROJECT
-    condition: succeeded()
-    steps:
     - task: Docker@2
       inputs:
         containerRegistry: 'acr'
@@ -125,12 +64,11 @@ stages:
         Dockerfile: '$(Build.SourcesDirectory)/temp2/dockerfile'
         tags: $(ProjectVersion)
 
-  - job: BUILD_PROJECT_DOCKER_FAILED
+  - job: DOWNLOAD_UNZIP_BUILD_PROJECT_FAILED
     dependsOn: 
-      - BUILD_PROJECT_DOCKER
-      - UNZIP_PROJECT
+      - DOWNLOAD_UNZIP_BUILD_PROJECT
       - KEYCLOAK
-    condition: and(eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Failed'), eq(dependencies.UNZIP_PROJECT.result, 'Succeeded'))
+    condition: and(eq(dependencies.DOWNLOAD_UNZIP_BUILD_PROJECT.result, 'Failed'), eq(dependencies.KEYCLOAK.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
@@ -148,13 +86,13 @@ stages:
                 --header 'Content-Type: application/json' \
                 --data-raw '{
                     "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E2 - Erreur dans le processus de déploiement",
+                    "Error": "E0 - Erreur dans le processus de déploiement (BUILD)",
                     "IpAddress": null
                 }'
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: TERRAFORM_PROJECT
-    dependsOn: BUILD_PROJECT_DOCKER
+    dependsOn: DOWNLOAD_UNZIP_BUILD_PROJECT
     condition: succeeded()
     steps:
     - task: file-creator@6
@@ -222,47 +160,10 @@ stages:
             }
           }
         fileoverwrite: true
-
-  - job: TERRAFORM_PROJECT_FAILED
-    dependsOn: 
-      - TERRAFORM_PROJECT
-      - BUILD_PROJECT_DOCKER
-      - KEYCLOAK
-    condition: and(eq(dependencies.TERRAFORM_PROJECT.result, 'Failed'), eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Succeeded'))
-    variables:
-      # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
-    steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: $(azureResourceManagerConnection)
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
-            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
-                --header 'Content-Type: application/json' \
-                --data-raw '{
-                    "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E3 - Erreur dans le processus de déploiement",
-                    "IpAddress": null
-                }'
-        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
-
-  - job: TERRAFORM_INSTALL
-    dependsOn: TERRAFORM_PROJECT
-    condition: succeeded()
-    steps:
     - task: TerraformInstaller@0
       inputs:
         terraformVersion: 'latest'
 
-  - job: TERRAFORM_INIT
-    dependsOn: TERRAFORM_INSTALL
-    condition: succeeded()
-    steps:
     - task: TerraformTaskV3@3
       inputs:
         provider: 'azurerm'
@@ -273,38 +174,6 @@ stages:
         backendAzureRmContainerName: 'terraform'
         backendAzureRmKey: 'terraform.tfstate'
 
-  - job: TERRAFORM_INIT_FAILED
-    dependsOn: 
-      - TERRAFORM_INIT
-      - TERRAFORM_PROJECT
-      - KEYCLOAK
-    condition: and(eq(dependencies.TERRAFORM_INIT.result, 'Failed'), eq(dependencies.TERRAFORM_PROJECT.result, 'Succeeded'))
-    variables:
-      # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
-    steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: $(azureResourceManagerConnection)
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
-            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
-                --header 'Content-Type: application/json' \
-                --data-raw '{
-                    "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E4 - Erreur dans le processus de déploiement",
-                    "IpAddress": null
-                }'
-        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
-
-  - job: TERRAFORM_DEPLOY
-    dependsOn: TERRAFORM_INIT
-    condition: succeeded()
-    steps:
     - task: AzureCLI@2
       inputs:
         azureSubscription: $(azureResourceManagerConnection)
@@ -317,12 +186,11 @@ stages:
           terraform apply -input=false -auto-approve
         arguments: '$(CustomerUID)'
 
-  - job: TERRAFORM_DEPLOY_FAILED
+  - job: TERRAFORM_PROJECT_FAILED
     dependsOn: 
-      - TERRAFORM_DEPLOY
-      - TERRAFORM_INIT
+      - TERRAFORM_PROJECT
       - KEYCLOAK
-    condition: and(eq(dependencies.TERRAFORM_DEPLOY.result, 'Failed'), eq(dependencies.TERRAFORM_INIT.result, 'Succeeded'))
+    condition: and(eq(dependencies.TERRAFORM_PROJECT.result, 'Failed'), eq(dependencies.KEYCLOAK.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
@@ -340,14 +208,14 @@ stages:
                 --header 'Content-Type: application/json' \
                 --data-raw '{
                     "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E5 - Erreur dans le processus de déploiement",
+                    "Error": "E1 - Erreur dans le processus de déploiement (TERRAFORM)",
                     "IpAddress": null
                 }'
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: KUBE_GET_IP
     dependsOn: 
-      - TERRAFORM_DEPLOY
+      - TERRAFORM_PROJECT
       - KEYCLOAK
     condition: succeeded()
     variables:
@@ -363,8 +231,6 @@ stages:
           sleep 10
           ip_customer=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
           echo $ip_customer
-          #si var vide, job status failed
-          #Sinon Ok
           curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": null, "IpAddress": "$ip_customer" }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
           KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
           ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
@@ -382,9 +248,9 @@ stages:
   - job: KUBE_GET_IP_FAILED
     dependsOn: 
       - KUBE_GET_IP
-      - TERRAFORM_DEPLOY
+      - TERRAFORM_PROJECT
       - KEYCLOAK
-    condition: and(eq(dependencies.KUBE_GET_IP.result, 'Failed'), eq(dependencies.TERRAFORM_DEPLOY.result, 'Succeeded'))
+    condition: and(eq(dependencies.KUBE_GET_IP.result, 'Failed'), eq(dependencies.TERRAFORM_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
@@ -402,7 +268,7 @@ stages:
                 --header 'Content-Type: application/json' \
                 --data-raw '{
                     "ProjectId": "'"$ProjectId_NO_QUOTES"'",
-                    "Error": "E6 - Erreur dans le processus de déploiement",
+                    "Error": "E3 - Erreur dans le processus de déploiement (KUBE)",
                     "IpAddress": null
                 }'
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'

@@ -62,8 +62,16 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          echo "curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
-
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E0 - Erreur dans le processus de déploiement",
+                    "IpAddress": null
+                }'
 
   - job: UNZIP_PROJECT
     dependsOn: DOWNLOAD_PROJECT
@@ -95,14 +103,12 @@ stages:
         inlineScript: |
             KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
             ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
-            echo $ProjectId_NO_QUOTES
-            # curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -v --data-raw '{ "projectId": $ProjectId_NO_QUOTES, "error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "ipAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
             curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
                 --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
                 --header 'Content-Type: application/json' \
                 --data-raw '{
-                    "ProjectId": 9,
-                    "Error": "Impossible de récupérer le projet généré !",
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E1 - Erreur dans le processus de déploiement",
                     "IpAddress": null
                 }'
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
@@ -136,8 +142,15 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
             KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            echo "curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
-            curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E2 - Erreur dans le processus de déploiement",
+                    "IpAddress": null
+                }'
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: TERRAFORM_PROJECT
@@ -220,9 +233,23 @@ stages:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
-      - script: |
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (2)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
-
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E3 - Erreur dans le processus de déploiement",
+                    "IpAddress": null
+                }'
+        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: TERRAFORM_INSTALL
     dependsOn: TERRAFORM_PROJECT
@@ -256,9 +283,23 @@ stages:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
-      - script: |
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (3)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
-
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E4 - Erreur dans le processus de déploiement",
+                    "IpAddress": null
+                }'
+        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: TERRAFORM_DEPLOY
     dependsOn: TERRAFORM_INIT
@@ -286,9 +327,23 @@ stages:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
-      - script: |
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (4)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
-
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E5 - Erreur dans le processus de déploiement",
+                    "IpAddress": null
+                }'
+        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: KUBE_GET_IP
     dependsOn: 
@@ -311,7 +366,16 @@ stages:
           #si var vide, job status failed
           #Sinon Ok
           curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": null, "IpAddress": "$ip_customer" }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
-
+          KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+          ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+          curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+              --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+              --header 'Content-Type: application/json' \
+              --data-raw '{
+                  "ProjectId": $ProjectId_NO_QUOTES,
+                  "Error": null,
+                  "IpAddress": "$ip_customer"
+              }'
           
         arguments: '$(CustomerUID) $(ProjectUID) $(KEYCLOAK_ACCESS_TOKEN)'
 
@@ -325,5 +389,20 @@ stages:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
-      - script: |
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Aucune IP attribuée... Merci de relancer le déploiement. (5)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
+            curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
+                --header "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" \
+                --header 'Content-Type: application/json' \
+                --data-raw '{
+                    "ProjectId": $ProjectId_NO_QUOTES,
+                    "Error": "E6 - Erreur dans le processus de déploiement",
+                    "IpAddress": null
+                }'
+        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'

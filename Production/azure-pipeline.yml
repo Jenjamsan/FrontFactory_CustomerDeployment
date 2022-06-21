@@ -58,7 +58,7 @@ stages:
       and(eq(dependencies.DOWNLOAD_PROJECT.result, 'Failed'), eq(dependencies.KEYCLOAK.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' -H Content-Type: application/json -H Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN) https://api.frontfactory.fr/parser/v1.0/project/pipeline
@@ -86,12 +86,8 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          echo "$(KEYCLOAK_ACCESS_TOKEN) token"
-          echo "$(ProjectUID) project uid"
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Impossible de déziper le projet généré !", "IpAddress": null }'
+          curl -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' -H Content-Type: application/json -H Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN) https://api.frontfactory.fr/parser/v1.0/project/pipeline
+
     
   - job: BUILD_PROJECT_DOCKER
     dependsOn: UNZIP_PROJECT
@@ -109,10 +105,11 @@ stages:
     dependsOn: 
       - BUILD_PROJECT_DOCKER
       - UNZIP_PROJECT
+      - KEYCLOAK
     condition: and(eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Failed'), eq(dependencies.UNZIP_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -194,10 +191,11 @@ stages:
     dependsOn: 
       - TERRAFORM_PROJECT
       - BUILD_PROJECT_DOCKER
+      - KEYCLOAK
     condition: and(eq(dependencies.TERRAFORM_PROJECT.result, 'Failed'), eq(dependencies.BUILD_PROJECT_DOCKER.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -231,10 +229,11 @@ stages:
     dependsOn: 
       - TERRAFORM_INIT
       - TERRAFORM_PROJECT
+      - KEYCLOAK
     condition: and(eq(dependencies.TERRAFORM_INIT.result, 'Failed'), eq(dependencies.TERRAFORM_PROJECT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -262,10 +261,11 @@ stages:
     dependsOn: 
       - TERRAFORM_DEPLOY
       - TERRAFORM_INIT
+      - KEYCLOAK
     condition: and(eq(dependencies.TERRAFORM_DEPLOY.result, 'Failed'), eq(dependencies.TERRAFORM_INIT.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -274,11 +274,13 @@ stages:
           --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème au déploiement des ressources !", "IpAddress": null }'
 
   - job: KUBE_GET_IP
-    dependsOn: TERRAFORM_DEPLOY
+    dependsOn: 
+      - TERRAFORM_DEPLOY
+      - KEYCLOAK
     condition: succeeded()
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
     - task: AzureCLI@2
       inputs:
@@ -302,10 +304,11 @@ stages:
     dependsOn: 
       - KUBE_GET_IP
       - TERRAFORM_DEPLOY
+      - KEYCLOAK
     condition: and(eq(dependencies.KUBE_GET_IP.result, 'Failed'), eq(dependencies.TERRAFORM_DEPLOY.result, 'Succeeded'))
     variables:
       # map the output variable from A into this job
-      KEYCLOAK_ACCESS_TOKEN: $[ stageDependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
+      KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
           curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \

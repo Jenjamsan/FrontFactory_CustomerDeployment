@@ -61,10 +61,7 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.one.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }'
+          curl -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' -H Content-Type: application/json -H Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN) https://api.frontfactory.fr/parser/v1.0/project/pipeline
 
   - job: UNZIP_PROJECT
     dependsOn: DOWNLOAD_PROJECT

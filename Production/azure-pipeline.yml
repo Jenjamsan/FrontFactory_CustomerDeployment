@@ -93,8 +93,8 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
             KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
-            echo "curl -X POST -H Content-Type: application/json -H Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES -d '{ ProjectId: $2, Error: Déploiement de votre projet impossible. Merci de réessayer. (0), IpAddress: null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
-            curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -d '{ "ProjectId": "$2", "Error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+            echo "curl -X PATCH -H Content-Type: application/json -H Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES -d '{ ProjectId: $2, Error: Déploiement de votre projet impossible. Merci de réessayer. (0), IpAddress: null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
+            curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -d '{ "ProjectId": "$2", "Error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
         arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
   
   - job: BUILD_PROJECT_DOCKER

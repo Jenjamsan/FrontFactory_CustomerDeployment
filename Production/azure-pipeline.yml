@@ -97,7 +97,7 @@ stages:
             ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
             echo $ProjectId_NO_QUOTES
             # curl -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -v --data-raw '{ "projectId": $ProjectId_NO_QUOTES, "error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "ipAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
-            curl --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline'
+            curl --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
                 --header 'Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES' \
                 --header 'Content-Type: application/json' \
                 --data-raw '{

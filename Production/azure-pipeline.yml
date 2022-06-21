@@ -61,7 +61,8 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' -H Content-Type: application/json -H Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN) https://api.frontfactory.fr/parser/v1.0/project/pipeline
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+
 
   - job: UNZIP_PROJECT
     dependsOn: DOWNLOAD_PROJECT
@@ -112,10 +113,7 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème rencontré avec docker !", "IpAddress": null }'
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
 
   - job: TERRAFORM_PROJECT
     dependsOn: BUILD_PROJECT_DOCKER
@@ -198,10 +196,8 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème à la création du fichier de ressources terraform !", "IpAddress": null }'
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (2)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+
 
   - job: TERRAFORM_INSTALL
     dependsOn: TERRAFORM_PROJECT
@@ -236,10 +232,8 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème à l'Init de terraform !", "IpAddress": null }'
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (3)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+
 
   - job: TERRAFORM_DEPLOY
     dependsOn: TERRAFORM_INIT
@@ -268,10 +262,8 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème au déploiement des ressources !", "IpAddress": null }'
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (4)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+
 
   - job: KUBE_GET_IP
     dependsOn: 
@@ -293,10 +285,8 @@ stages:
           echo $ip_customer
           #si var vide, job status failed
           #Sinon Ok
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $3' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $2, "Error": null, "IpAddress": "$ip_customer" }'
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": null, "IpAddress": "$ip_customer" }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+
           
         arguments: '$(CustomerUID) $(ProjectUID) $(KEYCLOAK_ACCESS_TOKEN)'
 
@@ -311,7 +301,4 @@ stages:
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
       - script: |
-          curl --location --request POST 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
-          --header 'Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "ProjectId": $(ProjectUID), "Error": "Problème de récupération IP", "IpAddress": null }'
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Aucune IP attribuée... Merci de relancer le déploiement. (5)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline

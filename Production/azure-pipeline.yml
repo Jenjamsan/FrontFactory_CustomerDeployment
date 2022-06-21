@@ -86,12 +86,17 @@ stages:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
-      - script: |
-          KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$(KEYCLOAK_ACCESS_TOKEN)")
-          echo $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES
-          echo "curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $KEYCLOAK_ACCESS_TOKEN_NO_QUOTES" -d '{ "ProjectId": $(ProjectUID), "Error": "Impossible de récupérer le projet généré !", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
-
-    
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            echo "curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
+            curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (0)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
+  
   - job: BUILD_PROJECT_DOCKER
     dependsOn: UNZIP_PROJECT
     condition: succeeded()
@@ -114,8 +119,16 @@ stages:
       # map the output variable from A into this job
       KEYCLOAK_ACCESS_TOKEN: $[ dependencies.KEYCLOAK.outputs['keycloak.KEYCLOAK_ACCESS_TOKEN'] ]
     steps:
-      - script: |
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $(KEYCLOAK_ACCESS_TOKEN)" -d '{ "ProjectId": $(ProjectUID), "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
+            echo "curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline"
+            curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $1" -d '{ "ProjectId": $2, "Error": "Déploiement de votre projet impossible. Merci de réessayer. (1)", "IpAddress": null }' https://api.frontfactory.fr/parser/v1.0/project/pipeline
+        arguments: '$(KEYCLOAK_ACCESS_TOKEN) $(ProjectUID)'
 
   - job: TERRAFORM_PROJECT
     dependsOn: BUILD_PROJECT_DOCKER

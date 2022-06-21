@@ -77,6 +77,8 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
+            az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
+            az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
             KEYCLOAK_ACCESS_TOKEN_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$1")
             ProjectId_NO_QUOTES=$(sed -e 's/^"//' -e 's/"$//' <<<"$2")
             curl -v --location --request PATCH 'https://api.frontfactory.fr/parser/v1.0/project/pipeline' \
@@ -93,6 +95,14 @@ stages:
     dependsOn: DOWNLOAD_UNZIP_BUILD_PROJECT
     condition: succeeded()
     steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureResourceManagerConnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
+            az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
     - task: file-creator@6
       inputs:
         filepath: 'main.tf'

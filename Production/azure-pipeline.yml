@@ -44,8 +44,6 @@ stages:
         scriptLocation: inlineScript
         arguments: '$(Build.SourcesDirectory) $(CustomerUID) $(ShareName) $(ConnectionString) $(ProjectUID) $(ProjectVersion) $(dirName) $(keycloak.KEYCLOAK_ACCESS_TOKEN)' 
         inlineScript: |
-            az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
-            az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
             mkdir -p $1/temp
             mkdir -p $1/temp2
             az storage file download --path "$2/$5/$6/$7.zip" --share-name "$3" --account-name asafrontfactoryprodv2 --dest "$1/temp" --connection-string "$4"
@@ -228,6 +226,8 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
+          az account set --subscription e2270597-5099-424b-9597-6c5963dd2d81
+          az aks get-credentials --resource-group rgfrontfactoryprodv2 --name aksfrontfactoryprodv2
           sleep 10
           ip_customer=$(kubectl get svc customer-service-$2-$1 -n customer-namespace-$1 -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
           echo $ip_customer
